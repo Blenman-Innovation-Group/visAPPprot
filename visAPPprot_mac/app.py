@@ -676,8 +676,6 @@ def google_image_search():
     global current
 
     try:
-        api_key = "NO"
-        cx = "NO"
 
         service = build("customsearch", "v1", developerKey=api_key)
 
