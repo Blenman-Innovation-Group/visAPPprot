@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+
+<style>
+  
+.button{
+    height:30px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+#Progress_Status {
+width: 100%;
+background-color: #ddd;
+position: relative;
+top: 20px;
+display: none;
+}
+
+#myprogressBar {
+width: 2%;
+height: 20px;
+background-color: #4CAF50;
+display: none;
+}
+
+</style>
+
+<div style="display: flex;">
+    <form id="home" action="/" method="get">
+      <button class="button" type="submit" onclick="home();">Home</button>
+    </form>
+
+    <form id="cell_correlation" action="/context_map" method="get">
+      <button class="button" type="submit" onclick="cell_correlation();">Context Map</button>
+    </form>
+
+</div>
+
+
+<div id="my_dataviz"></div>
+<div id="Progress_text" style="display:none; font-size:20px; font-family:Arial; color:black;"> </div>
+<div id="Progress_Status">
+<div id="myprogressBar"></div>
+
+<form id="protein_info" method="post">
+  <input type="hidden" name="protein_name" id="protein_name" value="" />
+  <button id="protein_info_button" class="button" type="submit"></button>
+</form>
+
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script>
+  var w = 1000,
+        h = 800;
+
+    // https://d3-graph-gallery.com/graph/scatter_tooltip.html
+    var margin = {
+        top: 50,
+        right: 50,
+        bottom: 50,
+        left: 50,
+      };
+      
+    var regionWidth = w/8;
+    var regionHeight = h;
+    var pointA = regionWidth,
+      pointB = w - regionWidth;
+
+    var sections = 4;
+
+    let cur_dataset = {{cur_dataset | tojson}};
+    let volcano_fig_count = {{volcano_fig_count | tojson}};
+    let column_name = {{column_name | tojson}};
+    let id_name = "volcano_" + cur_dataset.split(".")[0] + "_" + volcano_fig_count.toString()
+
+    const svg = d3.select("#my_dataviz").append("svg")
+      .attr("id", id_name)
+      .attr('width', margin.left + w + margin.right)
+      .attr('height', margin.top + h + margin.bottom)
+      .attr('padding',50)
+      .attr('transform', "translate(" + margin.left + "," +  margin.top+ ")");
+
+
+    var resShrink = {{resShrink | tojson}};
+
+    const get_protein_form = document.getElementById("protein_info");
+
+    var select_protein = "";
+    var ret_protein_info = null;
+
+    get_protein_form.addEventListener('submit', function(event) {
+        event.preventDefault();    // prevent page from refreshing
+
+        let formData = new FormData();
+        formData.append("protein_name", select_protein);
+        fetch('/volcano', {   // assuming the backend is hosted on the same server
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(protein_info => {
+          ret_protein_info = protein_info;
+        });
+      
+    });
+
+ 
+    resShrink_iter = [];
+
+
+    for (var key in resShrink) {
+      Log2Fold_Change = resShrink[key][0];
+      pvalue = resShrink[key][1];
+      adjPvalue = resShrink[key][2];
+      label_interest = resShrink[key][3];
+      neglog10pval = resShrink[key][4];
+      name = resShrink[key][5];
+
+      if (adjPvalue < 0) {
+        adjPvalue = null;
+      }
+
+      if (neglog10pval < 0) {
+        neglog10pval = null;
+      }
+
+      if (label_interest == "xxx") {
+        label_interest = null;
+      }
+
+      new_d = {"Log2Fold_Change": Log2Fold_Change, "adjPvalue": adjPvalue, "label_interest": label_interest, "neglog10pval": neglog10pval, "pvalue": pvalue, "name": name}
+
+      resShrink_iter.push(new_d)
+    }
+
+    levels = {{levels | tojson}};
+
+    plotVolcano(resShrink_iter, levels);
+
+    var lineNumber = 0;
+    var lineHeight = 1.2;
+    // https://stackoverflow.com/questions/29144678/wrapping-long-text-in-d3-js
+    function wrap(text, width, protein) {
+      lineNumber = 0;
+
+      text.each(function() {
+          var text = d3.select(this),
+          words = text.text().split(/\s+/).reverse(),
+          word,
+          line = [],
+          x = text.attr("x"), //<-- include the x!
+          y = text.attr("y"),
+          dy = text.attr("dy") ? text.attr("dy") : 0; //<-- null check
+
+          tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em").style("font-weight", "bold").text(protein + ":");
+
+          tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", lineHeight + "em");
+          lineNumber+=1;
+
+          while (word = words.pop()) {
+              line.push(word);
+              tspan.text(line.join(" "));
+              if (tspan.node().getComputedTextLength() > width) {
+                  line.pop();
+                  tspan.text(line.join(" "));
+                  line = [word];
+                  tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+              }
+          }
+
+      });
+  }
+
+  let protein_clicked = false;
+    
+    function plotVolcano(data, levels) {  
+
+      var volcano_w = w;
+      var volcano_h = h;
+
+      var maxValue = Math.max(
+        d3.max(data, function(d) { return d.Log2Fold_Change; }),
+        Math.abs(d3.min(data, function(d) { return d.Log2Fold_Change; }))
+      );
+        var maxYValue = Math.ceil(d3.max(data, function(d) { return d.neglog10pval; }));
+      
+      var minValue = -maxValue
+
+
+      var xScale = d3.scaleLinear()
+        .domain([-maxValue, maxValue])
+          .range([0, volcano_w]);
+
+      var yScale = d3.scaleLinear()
+        .domain([maxYValue, 0])
+          .range([0, volcano_h-margin.top - margin.bottom]);
+
+      var xAxis = d3.axisBottom(xScale)
+        .ticks(10);
+
+      var yAxis = d3.axisLeft(yScale)
+        .ticks(10);
+
+      svg.append('g')
+        .attr('class', 'axis x')
+        .attr('transform', "translate(" + margin.left + "," + (volcano_h - margin.bottom) + ")")//h+margin.top))
+        .call(xAxis)
+        .selectAll('text')
+        .style('text-anchor', 'middle');
+      
+      svg.append('g')
+        .attr('class', 'axis y')
+        .attr('transform', "translate(" + margin.left + "," + margin.top + ")")//margin.top))
+        .call(yAxis)
+        .selectAll('text')
+        .style('text-anchor', 'left');
+
+
+        // adj p value cut off
+        svg.append('line')
+        .style("stroke", "mediumseagreen")
+        .style("stroke-width", 1)
+        .style("stroke-dasharray", ("3, 3"))
+        .attr('x1', margin.left )
+        .attr('x2', volcano_w + margin.left)
+        .attr('y1', yScale(Math.abs(Math.log10(0.05))) + margin.top)
+        .attr('y2', yScale(Math.abs(Math.log10(0.05))) + margin.top);
+
+
+        svg.append('text')
+        .attr('x', volcano_w - margin.right)
+        .attr('y', yScale(Math.abs(Math.log10(0.05))) + margin.top + 12)
+        .text("-log10(pval) cut-off")
+        .style("font-size", "12px")
+        .style("font-style", "italic");
+
+        // add tick for for pval cutoff
+        svg.append('text')
+        .attr('x', margin.left - 20)
+        .attr('y', yScale(Math.abs(Math.log10(0.05))) + margin.top + 6)
+        .text(Math.abs(Math.log10(0.05)).toFixed(2))
+        .style("font-size", "12px");
+
+        // log2foldchange cutoff
+        svg.append('line')
+        .style("stroke", "mediumseagreen")
+        .style("stroke-width", 1)
+        .style("stroke-dasharray", ("3, 3"))
+        .attr('x1', xScale(1.0) + margin.left)
+        .attr('x2', xScale(1.0) + margin.left)
+        .attr('y1', margin.top )
+        .attr('y2', (volcano_h - margin.bottom) );
+
+
+        svg.append('line')
+        .style("stroke", "mediumseagreen")
+        .style("stroke-width", 1)
+        .style("stroke-dasharray", ("3, 3"))
+        .attr('x1', xScale(-1.0) + margin.left)
+        .attr('x2', xScale(-1.0) + margin.left)
+        .attr('y1', margin.top )
+        .attr('y2', (volcano_h - margin.bottom) );
+
+        svg.append('text')
+        .attr('x', xScale(-1.0) + margin.left - 5)
+        .attr('y', margin.top*2.5)
+        .text("log2 fold change cut-off")
+        .style("font-size", "12px")
+        .style("font-style", "italic")
+        .attr("transform", function() {
+          var x_val = xScale(-1.0) + margin.left - 5;
+          var y_val = margin.top*2.5;
+          return "rotate(-90," + x_val + "," + y_val + ")";
+        });
+
+        svg.append('text')
+        .attr('x', xScale(1.0) + margin.left - 5)
+        .attr('y', margin.top*2.5)
+        .text("log2 fold change cut-off")
+        .style("font-size", "12px")
+        .style("font-style", "italic")
+        .attr("transform", function() {
+          var x_val = xScale(1.0) + margin.left - 5;
+          var y_val = margin.top*2.5;
+          return "rotate(-90," + x_val + "," + y_val + ")";
+        });
+
+
+         svg.append('text')
+        .text("Log2 Fold Change")
+        .attr('x', volcano_w/2)
+        .attr('y', volcano_h)
+
+         svg.append('text')
+        .text("-log10(p-val)")
+        .attr('transform', 'translate(' + margin.left/2 + ',' + volcano_h/2 + ') rotate(-90)')
+        
+
+      var color = d3.scaleOrdinal()
+        .domain(["No", "Down", "Up" ])
+        .range([ "#000000", "#ff0000", "#009933"])
+
+
+     let data_filter = data.filter(function(d)
+       {
+            return (!isNaN(d.neglog10pval));
+       });
+
+      let circles = svg
+        .selectAll('circle')
+        .data(data_filter)
+        .join('circle')
+        .attr('cx', d => xScale(d.Log2Fold_Change) + margin.left)
+        .attr('cy', d => yScale(d.neglog10pval) + margin.top)
+        .attr('r', 3)
+        .attr('opacity', function(d) {
+          if (d.label_interest)
+            return 1.0;
+          if (d.neglog10pval)
+            return 1.0;
+          return 0;
+
+        })
+        .attr("fill", function(d) {
+          if (d.label_interest) {
+            return color("Down");
+          }
+          else
+            return color("No");
+        })
+        // click to see uniprot protein info
+        .on("mouseover", function(event, d) {
+          if (d.label_interest)
+            document.body.style.cursor = 'pointer';
+        })
+        .on("mouseout", function(event, d) {
+          document.body.style.cursor = 'default';
+
+        })
+        .on("click", function(event, d) {
+
+
+          d3.select("#function_text").remove();
+          d3.select("#function_bg").remove();
+
+
+          select_protein = d.label_interest;
+
+          // make sure gene name is in ensembl_uniprot database
+          if (select_protein.includes("frag")) {
+            select_protein = select_protein.replaceAll('frag', '');
+          }
+
+          document.getElementById("protein_info_button").click();
+          
+
+          // wait for fetch function to finish getting response
+          setTimeout(function(){
+
+            let function_text = ret_protein_info["function_text"];
+            // prepend name of protein to function text
+            function_text = function_text;
+            let text_width = 500;
+
+            // append fake text to get lineHeight first
+            svg.append('text')
+            .attr('fill', 'black')
+            .attr('font-size', 12)
+            .attr('alignment-baseline', 'middle')
+            
+            .attr('x', function() {
+              let x_base = xScale(d.Log2Fold_Change) + margin.left;
+              if ((x_base + text_width) <= w) 
+                return x_base;
+              return (x_base - text_width);
+
+            })
+            .attr('y', function() {
+              let y_base = yScale(d.neglog10pval) + margin.top + 15;
+              let height = (lineNumber+1) * lineHeight * 12;
+
+              if ((y_base + height) <= h)
+                return y_base;
+
+              return (y_base - ((y_base+height)-h));
+            })
+            
+            .text(function_text)
+            .call(wrap, text_width, select_protein)
+            .attr("id", "function_text_test");
+
+            d3.select("#function_text_test").remove();
+
+
+            // append text
+            svg.append('text')
+            .attr('fill', 'black')
+            .attr('font-size', 12)
+            .attr('alignment-baseline', 'middle')
+            
+            .attr('x', function() {
+              let x_base = xScale(d.Log2Fold_Change) + margin.left;
+              if ((x_base + text_width) <= w) 
+                return x_base;
+              return (x_base - text_width);
+
+            })
+            .attr('y', function() {
+              let y_base = yScale(d.neglog10pval) + margin.top + 15;
+              let height = (lineNumber+1) * lineHeight * 12;
+
+              if (((y_base + height) <= h) || (height > h))
+                return y_base;
+
+              return (y_base - ((y_base+height)-h));
+            })
+            
+            .text(function_text)
+            .call(wrap, text_width, select_protein)
+            .attr("id", "function_text");
+
+            // append rectangle background for text
+            svg.append('rect')
+            .attr('fill', '#f9e4bc')
+            .attr('x', function() {
+              let x_base = xScale(d.Log2Fold_Change) + margin.left;
+              if ((x_base + text_width) <= w) 
+                return x_base;
+              return (x_base - text_width);
+
+            })
+            .attr('y', function() {
+              let y_base = yScale(d.neglog10pval) + margin.top + 6;
+              let height = (lineNumber+1) * lineHeight * 12;
+
+              if (((y_base + height) <= h) || (height > h))
+                return y_base;
+              
+              return (y_base - ((y_base+height)-h) - lineHeight*12);
+            })
+            .attr('height', (lineNumber+1) * lineHeight * 12)
+            .attr('width', text_width)
+            .attr("id", "function_bg");
+
+
+
+            d3.select("#function_text").raise();
+
+            protein_clicked = true;
+
+
+          }, 1500);     
+          
+        })
+        .append("title").text(function(d) { return d.Label+'\n'+'-log10(pValue): '+parseFloat(d.neglog10pval).toFixed(2)+'\n'+'log2FoldChange: '+parseFloat(d.Log2Fold_Change).toFixed(2)});
+
+
+
+        const visibleStates = data.filter(s => s.label_interest);
+        const labelHeight = 12;
+
+
+        const labels = visibleStates.map(s => {
+          return {
+            targetX: xScale(s.Log2Fold_Change)+margin.left,
+            targetY: yScale(s.neglog10pval)+margin.top
+          };
+        });
+        
+        // https://www.placeiq.com/2017/08/pointsofinterestd3forcelayout/
+        // https://walkingtree.tech/d3-quadrant-chart-collision-in-angular2-application/
+        const force = d3.forceSimulation()
+        .nodes(labels)
+        .force('collide', d3.forceCollide(1.5*labelHeight))
+        .force('x', d3.forceX(d => d.targetX).strength(1))  
+        .force('y', d3.forceY(d => d.targetY).strength(1))    
+        .stop();
+
+
+        for (let i = 0; i < 300; i++) force.tick();
+
+        visibleStates.forEach((state, i) => state.y = labels[i].y);
+        visibleStates.forEach((state, i) => state.x = labels[i].x);
+
+
+        const legendItems = svg.selectAll('.labels').data(visibleStates, d => d.label_interest);
+
+        legendItems.exit().remove();
+        legendItems.attr('y', d => d.y);
+        legendItems.enter().append('text')
+          .attr('class', 'legend-item')
+          .html(d => d.label_interest)
+          .attr('fill', 'blue')
+          .attr('font-size', labelHeight)
+          .attr('alignment-baseline', 'middle')
+          .attr('x', d => d.x + 5)
+          .attr('y', d => d.y);
+
+        const links = visibleStates.filter(d => Math.sqrt((xScale(d.Log2Fold_Change)-d.x)**2 + ((yScale(d.neglog10pval)+margin.top) - d.y)**2) > 5);
+
+
+        svg.selectAll(".link")
+        .data(links)
+        .enter()
+        .append("line")
+        .attr("class", "link")
+        .attr("x1", function (d) { return xScale(d.Log2Fold_Change)+margin.left; })
+        .attr("y1", function (d) { return yScale(d.neglog10pval)+margin.top; })
+        .attr("x2", function (d) { return (d.x + 5); })
+        .attr("y2", function (d) { return (d.y); })
+        .attr("stroke-width", 1.0)
+        .attr("stroke", "orange");
+
+        svg.append ("polygon")
+        .attr("points", "0,95 80,95 80,110 100,90 80,70 80,85 0,85 ") 
+        .attr("transform", "translate(" + (volcano_w/2 + margin.left + 50) + "," + (volcano_h - margin.bottom - 20) + ") scale(2, 1)")
+
+        svg.append ("polygon")
+        .attr("points", "0,95 80,95 80,110 100,90 80,70 80,85 0,85 ") 
+        .attr("transform", "translate(" + (volcano_w/2 + margin.left - 50) + "," + (volcano_h - margin.bottom - 20) + ") scale(-2, 1)")
+
+        // add levels to label arrows
+        svg.append("g")
+        .attr("transform", "translate(" + (volcano_w/2 + margin.left - 150) + "," + (volcano_h 
+      + margin.bottom + 20 ) + ")")
+        .append("text")
+          .attr("x", 0)
+          .attr("y", 0)
+          .text(levels[0])
+          .style("fill", "black" )
+          .style("font-size", 18)
+
+        svg.append("g")
+        .attr("transform", "translate(" + (volcano_w/2 + margin.left + 110) + "," + (volcano_h 
+      + margin.bottom + 20 ) + ")")
+        .append("text")
+          .attr("x", 0)
+          .attr("y", 0)
+          .text(levels[1])
+          .style("fill", "black" )
+          .style("font-size", 18)
+
+
+        d3.selectAll("circle").raise();
+        
+
+        svg.on("click", function() {
+            if (protein_clicked) {
+              protein_clicked = false;
+
+              d3.select("#function_text").remove();
+              d3.select("#function_bg").remove();
+            }
+        });
+
+    }
+
+    
+
+
+
+</script>

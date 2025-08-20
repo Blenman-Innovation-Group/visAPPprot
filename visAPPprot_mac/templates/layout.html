@@ -1,0 +1,3635 @@
+<!DOCTYPE html>
+
+<style>
+
+select {
+  width:200px;
+  height:30px;
+}
+
+.link {
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+  
+.button{
+    height:90px;
+    font-size: 60px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+ 
+.templates {
+  width: 600px !important;
+  height: auto !important;
+}
+
+#Progress_Status {
+width: 100%;
+background-color: #ddd;
+position: relative;
+top: 20px;
+display: none;
+}
+
+#myprogressBar {
+width: 2%;
+height: 20px;
+background-color: #4CAF50;
+display: none;
+}
+
+
+/* Dropdown Button */
+.dropbtn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus {
+  background-color: #3e8e41;
+}
+
+/* The search field */
+#myInput {
+  box-sizing: border-box;
+  background-image: url('searchicon.png');
+  background-position: 14px 12px;
+  background-repeat: no-repeat;
+  font-size: 16px;
+  padding: 14px 20px 12px 45px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+}
+
+/* The search field when it gets focus/clicked on */
+#myInput:focus {outline: 3px solid #ddd;}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f6f6f6;
+  min-width: 500px;
+  border: 1px solid #ddd;
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: black;
+  padding: 5px 5px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #f1f1f1}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
+
+div.scroll-container {
+  display: block;
+  overflow: auto; 
+}
+
+div.scroll-container img {
+  padding: 10px;
+  display: block;
+  max-width: 100%;
+}
+
+div.scrolling-wrapper {
+      background-color: #333;
+      position: absolute; 
+      left: 6000px; 
+      top: 600px;
+      width: 700px;
+      height: 2000px; 
+      overflow: auto; 
+      border: 1px solid #ccc; 
+}
+
+
+div.template-button {
+  position: absolute; 
+  left: 6150px; 
+  top: 2650px;  
+}
+
+div.template-side-button {
+  position: absolute; 
+  left: 6150px; 
+  top: 2900px;  
+}
+
+.turn_off_template_bg{
+  background-color:#CCFFCC;
+}
+
+.turn_off_template_bg:hover{
+  background-color:#808080;
+}
+
+.turn_off_template_side{
+  background-color:#FFFFCC ;
+}
+
+.turn_off_template_side:hover{
+  background-color:#808080;
+}
+
+
+div.scroll-container-progress {
+  display: block;
+}
+
+div.scroll-container-progress img {
+  padding: 10px;
+  display: block;
+}
+
+div.scrolling-wrapper-progress {
+  background-color: #333;
+  position: absolute; 
+  left: 0px; 
+  top: 200px;
+  width: 700px;
+  height: 1500px; 
+  overflow-y: auto; 
+  overflow-x: hidden;
+  border: 1px solid #ccc; 
+}
+
+.state-label {
+  position: absolute;
+  top: 50px;
+  left: 50px;
+  background-color: rgba(255, 255, 255);
+  color: black;
+  padding: 5px;
+  font-size: 32px;
+  z-index: 1;
+}
+
+
+.progress_text {
+  font-size: 60px;
+  text-decoration: underline;
+  display:inline;
+}
+
+/* https://forums.select2.org/t/add-more-item-in-my-select/1487/3 */
+.select2-results__options {
+    max-height: 500px !important; 
+    overflow-y: auto !important;
+}
+
+/* https://stackoverflow.com/questions/36360783/how-to-render-html-in-select2-options*/
+.select2-selection__rendered {
+  line-height: 80px !important;
+}
+
+/* https://stackoverflow.com/questions/17480040/select2-hiding-the-search-box*/
+.select2-search__field {
+  line-height: 80px;
+  font-size: 60px;
+}
+
+.select2-results__message {
+  font-size: 60px;
+}
+
+/*https://stackoverflow.com/questions/78325713/change-height-of-select-2*/
+.select2-container .select2-selection.select2-selection--single {
+  height: 80px;
+  font-size: 60px;
+}
+
+.thumbnail-font {
+    font-size: 48px; 
+}
+
+::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 28px;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(255,255,255,.5);
+    -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
+
+</style>
+
+
+<div style="display: flex">
+    <form id="home" action="/" method="get">
+      <button class="button" type="submit" onclick="home();">Home</button>
+    </form>
+
+    <form id="google_image_search" action="/google_image_search" method="get" target="_blank">
+      <button class="button" type="submit">Exemplar References</button>
+    </form>
+
+
+    <form id="download_exemplar" action="/context_map" method="post">
+      <input type="hidden" name="template_urls" id="template_urls" value="template_urls"/>
+      <button id="submit_exemplar_button" class="button" type="submit" hidden></button>
+    </form>
+
+
+    <select name="entities" id ="entities" style="width: 450px;" onchange="add_entity(this.value, '', null); ">
+       {% for rc_icon in rc_icons %}
+           <option value="{{ rc_icon }}"> {{ rc_icon }}</option>
+       {% endfor %}
+    </select>
+
+    
+</div>
+
+
+<div class="scrolling-wrapper" >
+  <div class="scroll-container">
+
+    {% for image in template_images %}
+
+      <div id="temp_{{loop.index}}" style="position: relative; width: 600px;"> 
+        <img src="{{image}}" class="templates" style="width: 600px;"
+             onmouseover="showImage('temp_{{loop.index}}', '{{image}}')"
+             onmouseout="hideImage('temp_{{loop.index}}')" 
+             onclick="template_image_click('{{image}}')">
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="progress_text"> <label for="Progress Label">State Label:</label> </div>
+<input type="text" id="Progress Label" name="Progress Label" placeholder="Progress 1" style="height:60px; width:500px; font-size:50px;">
+ <button id = "save_progress" class="button" onclick="save_progress();">Save Progress</button>
+
+
+<div class="scrolling-wrapper-progress" >
+  <div class="scroll-container-progress">
+    {% for thumbnail in progress_thumbnails %}
+
+      <div id="thumbnail_{{loop.index}}" style="position: relative; width: 600px;">
+        <img src="{{thumbnail}}" class="progress_thumbnails" width="700" height="800"
+             onmouseover="showImageProgress('thumbnail_{{loop.index}}', '{{thumbnail}}')"
+             onmouseout="hideImageProgress('thumbnail_{{loop.index}}')" 
+             onclick="progress_thumbnail_click('{{thumbnail}}')">
+        <div class="state-label" onmouseover="showImageProgress('thumbnail_{{loop.index}}', '{{thumbnail}}')"
+             onmouseout="hideImageProgress('thumbnail_{{loop.index}}')" 
+             onclick="progress_thumbnail_click('{{thumbnail}}')">
+          <span class="thumbnail-font">{{ thumbnail.split('/')[3].split(';')[0] }}</span>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class = "template-button">
+  <button id = "turn_off_template_bg" class="turn_off_template_bg" type="submit" onclick="turn_off_template_bg();" style="height:200px; width:400px; font-size: 50px;">Clear Exemplar Background</button>
+</div>
+
+
+<div class= "template-side-button">
+  <button id = "turn_off_template_side" class="turn_off_template_side" type="submit" onclick="turn_off_template_side();" style="height:200px; width:400px; font-size: 50px;">Clear Exemplar Side Image</button>
+</div>
+
+
+
+<div id="my_dataviz"></div>
+
+<div id="exemplar_display" style="top: 100px; left: 7000px; position:absolute;"></div>
+
+
+
+<div id="inputFields"></div>
+
+<div id="Progress_text" style="display:none; font-size:20px; font-family:Arial; color:black;"> </div>
+<div id="Progress_Status">
+<div id="myprogressBar"></div>
+
+<form id="cell_corr_progress_save" action="/context_map" method="post">
+  <input type="hidden" name="states" id="states" value="" />
+  <input type="hidden" name="states_index" id="states_index" value="" />
+  <input type="hidden" name="shapes_counter" id="shapes_counter" value="" />
+  <input type="hidden" name="text_counter" id="text_counter" value="" />
+  <input type="hidden" name="template_words_match" id="template_words_match" value="" />
+  <button id="cell_corr_progress_save_button" class="button" type="submit"></button>
+</form>
+
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<!-- load select2 for select menu dropdown -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+<script>
+  function showImage(elemId, imgSrc) {
+    // https://happysnailprogramming.com/2020/08/11/pop-up-images-how-to-make-an-image-appear-when-hovering-over-text-using-javascript-and-html/
+    const elem = document.getElementById(elemId);
+    const popImage = new Image();
+    popImage.src = imgSrc;
+    popImage.style.position = "fixed";
+    popImage.style.zIndex = "10000";
+    popImage.style.width = "2000px";
+    popImage.style.height = "auto";
+    popImage.style.maxWidth = "2000px";
+    popImage.id = `hover-${elemId}`;
+
+
+    let rect = elem.getBoundingClientRect();
+    popImage.style.top = '300px';
+    popImage.style.left = `${rect.left - 2000}px`;
+
+    
+     document.body.appendChild(popImage);
+  }
+
+  function hideImage(elemId) {
+    const elem = document.getElementById(`hover-${elemId}`);
+    if (elem) {
+      document.body.removeChild(elem);
+    }
+  }
+
+  let words_list = {{words_list | tojson}};
+  let words_list_lower = {};
+
+  // lowercase and remove extra characters from words
+  for (var [image_name, words] of Object.entries(words_list)) {
+    var words_lower = {};
+    for (var [name, pos] of Object.entries(words)) {
+      name = name.toLowerCase();
+      name = name.replace(/[^a-zA-Z0-9]/g, ' ');
+      words_lower[name]  = pos;
+    }
+    words_list_lower[image_name] = words_lower;
+  }
+
+
+  // format select option with mini icon of icon
+  function formatState (state) {
+
+    if (state.text.includes("Searching"))
+      return state.text;
+
+    if (state.text.includes("Add entity"))
+      return "";
+
+    var baseUrl = "/static/cell_icons/";
+    var $state = $(
+      '<span style="font-size: 60px;"><img src="' + baseUrl + '/' + state.element.value.trim() + '.png" width="70" height="70" class="img-flag" /> ' + state.text + '</span>'
+    );
+
+
+    return $state;
+  };
+
+  $(document).ready(function () {
+    //change selectboxes to selectize mode to be searchable
+       $("#entities").select2({
+      templateResult: formatState
+      });
+
+  });
+
+  function myFunction() {
+    document.getElementById("myDropdown").classList.toggle("show");
+  }
+
+
+  function filterEntitySearch() {
+    var input, filter, ul, li, a, i;
+    input = document.getElementById("myInput");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("myDropdown");
+    a = div.getElementsByTagName("a");
+    for (i = 0; i < a.length; i++) {
+      txtValue = a[i].textContent || a[i].innerText;
+      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+        a[i].style.display = "";
+      } else {
+        a[i].style.display = "none";
+      }
+    }
+  }
+
+  function showImageProgress(elemId, imgSrc) {
+    // https://happysnailprogramming.com/2020/08/11/pop-up-images-how-to-make-an-image-appear-when-hovering-over-text-using-javascript-and-html/
+    const elem = document.getElementById(elemId);
+    const popImage = new Image();
+    popImage.src = imgSrc;
+    popImage.style.position = "fixed";
+    popImage.style.zIndex = "10000";
+    popImage.style.width = "1500px";
+    popImage.style.height = "auto";
+
+    popImage.style.top = `150px`;
+    popImage.style.left = `700px`;
+    popImage.id = `hover-${elemId}`;
+
+
+    document.body.appendChild(popImage);
+
+    let state_label = imgSrc.split("/")[3].split(";")[0];
+
+    const label = document.createElement('div');
+    label.id = `label-${elemId}`;
+    label.textContent = state_label;
+    label.style.position = 'fixed';
+    label.style.zIndex = '10001'; 
+    label.style.color = 'black'; 
+    label.style.backgroundColor = 'rgba(255, 255, 255)'; 
+    label.style.padding = '10px';
+    label.style.fontSize = '56px';
+    
+    label.style.top = `200px`; 
+    label.style.left = `750px`; 
+
+    document.body.appendChild(label);
+
+  }
+
+
+  function hideImageProgress(elemId) {
+    const elem = document.getElementById(`hover-${elemId}`);
+    if (elem) {
+      document.body.removeChild(elem);
+    }
+
+    const label = document.getElementById(`label-${elemId}`);
+    if (label) {
+        document.body.removeChild(label);
+    }
+  }
+
+
+  var w = 5500,
+        h = 9000;
+
+    var margin = {
+        top: 100,
+        right: 500,
+        bottom: 100,
+        left: 200,
+      };
+      
+    var regionWidth = w/8;
+    var regionHeight = h;
+    var pointA = regionWidth,
+      pointB = w - regionWidth;
+
+    var sections = 4;
+
+    let states = {{states | tojson}}; // state_index : {element: (x,y)}
+
+
+    const svg = d3.select("#my_dataviz").append("svg")
+      .attr("id", "context_map")
+      .attr('width', margin.left + w + margin.right)
+      .attr('height', margin.top + h + margin.bottom)
+      .attr('padding',50)
+      .attr("viewBox", [-w / 2, -h / 2, w, h]);
+
+    // to display exemplar image on the side
+    const svg_template = d3.select("#exemplar_display").append("svg")
+      .attr("id", "svg_template")
+      .attr('width', 1.2*w)
+      .attr('height', h)
+      .attr('padding',0)
+      .attr("viewBox", [-w / 2, -h / 2, w, h]);
+
+
+
+
+    var gene_cells = {{gene_cells | tojson}};
+
+    var gene_processes = {{gene_processes | tojson}};
+    let organ_genes = {{organ_genes | tojson}};
+    var gene_organs = {{gene_organs | tojson}};
+
+    
+    var resShrink = {{resShrink | tojson}};
+    let levels = {{levels | tojson}};
+    let entity_type = {{entity_type | tojson}};
+
+    let template_images = {{template_images | tojson}};
+
+
+    let resShrink_iter = [];
+    let gene_phenotype = {};
+
+
+    for (var key in resShrink) {
+      Log2Fold_Change = resShrink[key][0];
+      pvalue = resShrink[key][1];
+      adjPvalue = resShrink[key][2];
+      label_interest = resShrink[key][3];
+      neglog10pval = resShrink[key][4];
+      name = resShrink[key][5];
+
+      if (adjPvalue < 0) {
+        adjPvalue = null;
+      }
+
+      if (neglog10pval < 0) {
+        neglog10pval = null;
+      }
+
+      if (label_interest == "xxx") {
+        label_interest = null;
+      }
+
+      new_d = {"Log2Fold_Change": Log2Fold_Change, "adjPvalue": adjPvalue, "label_interest": label_interest, "neglog10pval": neglog10pval, "pvalue": pvalue, "name": name}
+
+      resShrink_iter.push(new_d)
+
+      if ((Log2Fold_Change < 0) & (label_interest.length > 0)) {
+        gene_phenotype[label_interest] = levels[0];
+      }
+      if ((Log2Fold_Change > 0) & (label_interest.length > 0)) {
+        gene_phenotype[label_interest] = levels[1];
+      }
+    }
+
+
+
+d3
+  .select(".target")  // select the elements that have the class 'target'
+  .style("stroke-width", 8) // change their style: stroke width is not equal to 8 pixels
+
+ 
+    var genes_iter = [];
+    let total_genes = 0;
+    let max_cells = 0;
+    var genes_only = [];
+    let cell_gene_match = {}; // {cell : "cell", genes : []} each cell is its own disjoint graph so the same protein on different cells have to be separate instances
+    let cells_seen = [];
+    let cell_names = [];
+    let images_available = ["b cell", "b cells", "dendritic cell", "dendritic cells", "megakaryocytes", "monocyte", "monocytes", "nk cell", "nk cells", "nkt cell", "nkt cells", "t cells cd4", "t cells cd8"];
+
+
+    for (var gene_name in gene_cells) {
+      cells = gene_cells[gene_name];
+
+      // ignore genes that have no cell links
+      if (cells.length > 0) {
+
+        total_genes += 1;
+
+        let cur_cells = 0;
+
+        // store each cell as individual gene-cell pair
+        for (let i=0; i < cells.length; i++) {
+
+          cell = cells[i].toLowerCase();
+          cell = cell.replace(/\r/g, ''); // trailing \r from Windows machines input
+
+          // check if cell already exists, simplify so we don't have similar names
+          if (!(cell_names.includes(cell))) {
+            cell_plus_s = cell + "s";
+            cell_minus_s = cell.slice(0, -1);
+
+            if (cell_names.includes(cell_plus_s)) {
+              cell = cell_plus_s;
+            }
+            else if (cell_names.includes(cell_minus_s)) {
+              cell = cell_minus_s;
+            }
+            else {
+              cell_names.push(cell);
+            }
+
+          }
+
+
+          // different versions of cells names correlating to same protein causes duplicates
+          if ((cell in cell_gene_match) && (cell_gene_match[cell].includes(gene_name))) 
+            continue;
+
+          else {
+            cur_cells += 1;
+
+            new_d = {"gene": gene_name, "cell": cell, "x": cur_cells-1, "y": total_genes-1};
+
+            genes_iter.push(new_d);
+
+            if (!(cells_seen.includes(cell))) {
+              cells_seen.push(cell);
+              cell_gene_match[cell] = [];
+            }
+
+            cell_gene_match[cell].push(gene_name);
+          }
+            
+        }
+
+
+        genes_only.push({"gene": gene_name, "x": 0, "y": total_genes-1});
+          
+
+
+        if (cur_cells > max_cells)
+          max_cells = cur_cells;
+      }
+      
+    }
+
+
+    let nodes = [];
+    let links = [];
+    let node_count = 0;
+
+    let id_entity_type = {}; // node id : entity type
+    let entity_counts = {}; // entity type : count
+
+    for (var cell in cell_gene_match) {
+      id_entity_type[node_count] = entity_type[cell];
+      if (!entity_counts.hasOwnProperty(entity_type[cell])) {
+        entity_counts[entity_type[cell]] = 0;
+      }
+      entity_counts[entity_type[cell]]++;
+      nodes.push({"name" : cell, "type": "cell", "id": node_count, "level": "none", "type_count": entity_counts[entity_type[cell]]});
+      
+      cellID = node_count;
+      node_count += 1;
+
+      proteins = cell_gene_match[cell];
+
+      for (let i=0; i < proteins.length; i++) {
+        protein = proteins[i];
+        pheno = gene_phenotype[protein];
+        nodes.push({"name" : protein, "type": "protein", "id": node_count, "level": pheno, "type_count": i});
+        id_entity_type[node_count] = entity_type[cell];
+        proteinID = node_count;
+        node_count += 1;
+
+        links.push({"source": proteinID, "target": cellID });
+      }
+    }
+
+    let entity_colors = {
+    "Cell Type": "#12bf3e", 
+    "Organ": "#4e7be2", 
+    "Organelle": "#c788b4"};
+
+
+    let shapes_positions = {}; // x, y, theta, scale
+    let current_shape = "";
+    let human = null;
+
+
+    // https://observablehq.com/@d3/drag-zoom
+    function shapedragstarted(event, d) {
+          
+    }
+
+    
+    function shapedragged(event, d) {
+      let curr_id = d3.select(this).attr("id");
+
+      let x_curr = shapes_positions[curr_id].x;
+      let y_curr = shapes_positions[curr_id].y;
+      let theta = shapes_positions[curr_id].theta;
+      let scale = shapes_positions[curr_id].scale;
+      
+
+      let new_x = 0;
+      let new_y = 0;
+
+      if (curr_id.includes("text")) {
+        let str_length = document.getElementById(curr_id).textContent.length * 18 * scale;
+        let half = str_length/2;
+        let thetaRAD = theta * Math.PI/180;
+        let x_offset = half * Math.cos(thetaRAD);
+        let y_offset = half * Math.sin(thetaRAD);
+        new_x = event.x - x_offset;
+        new_y = event.y - y_offset;
+      }
+      else {
+        new_x = event.x-this.width.baseVal.value/2;
+        new_y = event.y-this.height.baseVal.value/2;
+      }
+
+      let x_center = d3.select(this).attr("width")/2;
+      let y_center = d3.select(this).attr("height")/2;
+
+
+      shapes_positions[curr_id].x = new_x;
+      shapes_positions[curr_id].y = new_y;
+
+
+      let transformation = 'translate(' + x_curr + ',' + y_curr + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + scale + ')'; 
+      
+      d3.select(this)
+        .attr('transform', transformation);
+    }
+    
+    function shapedragended(event, d) {
+      // at end of translation convert new_x and new_y to reference frame of object 
+      
+    }
+
+
+    // https://jsfiddle.net/hsspve49/
+    var fullAngle = 2 * Math.PI;
+    var rotate = d3.drag().on("drag", function(event, d) {
+
+      let x_curr = shapes_positions[current_shape].x;
+      let y_curr = shapes_positions[current_shape].y;
+      let scale = shapes_positions[current_shape].scale;
+
+      var rect = d3.select("#" + current_shape);
+      let button_x = x_curr + parseFloat(rect.attr("width"));
+      let button_y = y_curr + parseFloat(rect.attr("height"));
+      if (current_shape.includes("text")) {
+        let str_length = document.getElementById(current_shape).textContent.length * 18;
+        button_x = x_curr + str_length/2;
+        button_y = y_curr;
+      }
+
+      var theta = Math.atan2(event.y - button_y, event.x - button_x) * 180 / Math.PI;
+
+      let x_center = 0;
+      let y_center = 0;
+      x_center = parseFloat(rect.attr("width"))/2;
+      y_center = parseFloat(rect.attr("height"))/2;
+
+      if (current_shape.includes("text")) {
+        let str_length = document.getElementById(current_shape).textContent.length * 18 * scale;
+        x_center = str_length/2;
+        y_center = 1;
+      }
+
+      shapes_positions[current_shape].theta = theta;
+
+
+      let transformation = 'translate(' + x_curr + ',' + y_curr + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + scale + ')'; 
+      // rotates about (0,0) since attr("x") and attr("y") never changed
+      rect
+        .attr('transform', transformation);
+    })
+
+    
+
+    function scalestarted() {}
+
+    let new_scale = 1;
+
+    function scaledragged(event, d) {
+
+      let x_curr = shapes_positions[current_shape].x;
+      let y_curr = shapes_positions[current_shape].y;
+      let theta = shapes_positions[current_shape].theta;
+      let scale = shapes_positions[current_shape].scale;
+      let scale_save = shapes_positions[current_shape].scale_save;
+
+      var rect = d3.select("#" + current_shape);
+      let button_x = x_curr;
+      let button_y = y_curr;
+      let x_diff = event.x - button_x;
+      let y_diff = event.y - button_y;
+      new_scale = (Math.sqrt( x_diff*x_diff + y_diff*y_diff ) + parseFloat(rect.attr("width"))/2)/ parseFloat(rect.attr("width"))/2;
+      let x_center = parseFloat(rect.attr("width"))/2;
+      let y_center = parseFloat(rect.attr("height"))/2;
+
+      if (current_shape.includes("text")) {
+        let str_length = document.getElementById(current_shape).textContent.length * 18;
+        new_scale = (Math.sqrt( x_diff*x_diff + y_diff*y_diff ) + str_length/2) / str_length/2;
+        x_center = str_length/2;
+        y_center = 1;
+      }
+
+      let transformation = 'translate(' + x_curr + ',' + y_curr + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + new_scale + ')';
+      // rotates about (0,0) since attr("x") and attr("y") never changed
+      rect
+        .attr('transform', transformation);
+
+    }
+
+    function scaleended(event, d) {
+      console.log("scale ended");
+      var rect = d3.select("#" + current_shape);
+
+      
+      // reset scale to 1 before settign new_width and new_width so the new_scale doesn't compound
+      let x_curr = shapes_positions[current_shape].x;
+      let y_curr = shapes_positions[current_shape].y;
+      let theta = shapes_positions[current_shape].theta;
+      shapes_positions[current_shape].scale_save = new_scale;
+
+      var rect = d3.select("#" + current_shape);
+      let button_x = x_curr;
+      let button_y = y_curr;
+      let x_diff = event.x - button_x;
+      let y_diff = event.y - button_y;
+      
+      let x_center = parseFloat(rect.attr("width"))/2;
+      let y_center = parseFloat(rect.attr("height"))/2;
+
+      let transformation = 'translate(' + x_curr + ',' + y_curr + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + 1 + ')';
+      // rotates about (0,0) since attr("x") and attr("y") never changed
+      rect
+        .attr('transform', transformation);
+
+      if (current_shape.includes("text")) {
+        let str_length = document.getElementById(current_shape).textContent.length * 18;
+        x_center = str_length/2;
+        y_center = 1;
+        shapes_positions[current_shape].scale = new_scale;
+        shapes_positions[current_shape].scale_save = new_scale;
+
+        transformation = 'translate(' + x_curr + ',' + y_curr + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + new_scale + ')';
+        // rotates about (0,0) since attr("x") and attr("y") never changed
+        rect
+          .attr('transform', transformation);
+
+        return;
+      }
+
+      // update width and height based on scale
+      let new_width = parseFloat(rect.attr("width")) * new_scale;
+      let new_height = parseFloat(rect.attr("height")) * new_scale;
+
+      shapes_positions[current_shape].w = new_width;
+      shapes_positions[current_shape].h = new_height;
+
+      rect
+      .attr('width', new_width)
+      .attr('height', new_height);
+    }
+
+
+    var scale_interaction = d3.drag()
+        .on("start", scalestarted)
+        .on("drag", scaledragged)
+        .on("end", scaleended);
+
+
+    let icons_position = {};
+
+    let dragshape = d3.drag()
+        .on("start", shapedragstarted)
+        .on("drag", shapedragged)
+        .on("end", shapedragended);
+
+    let shapes_counter = {{shapes_counter | tojson}};
+    shapes_counter = parseInt(shapes_counter);
+
+    function add_shape(shape, restore_name, shapes_positions_this) {
+      let w_map = w/2;
+
+      let name = "shape_" + shape.replace(/[^a-zA-Z0-9]/g, '') + shapes_counter.toString();
+      shapes_counter += 1;
+
+      if (restore_name == "") {
+        shapes_positions[name] = {"x": 0, "y": 0, "theta": 0, "w": w*0.05, "h": w*0.05, "scale": 1, "scale_save": 1, "image_name": shape, "id": name, "type": "shape"}; // default x, y position
+      }
+      else {
+        name = restore_name;
+
+        // override current entity parameters
+        let shape_x = shapes_positions_this.x;
+        let shapy_y = shapes_positions_this.y;
+        let shape_w = shapes_positions_this.w;
+        let shapy_h = shapes_positions_this.h;
+        let theta = shapes_positions_this.theta;
+        let scale = shapes_positions_this.scale;
+        let scale_save = shapes_positions_this.scale_save;
+
+        shapes_positions[name] = {"x": shape_x, "y": shape_y, "w": shape_w, "h": shape_h, "theta": theta, "scale": scale, "image_name": shape, "id": name, "type": "shape"};
+      }
+
+      let rc_width = w;
+      let rc_height = w;
+
+
+      svg.append("image")
+          .attr("xlink:href", function() {
+            return "/static/icons/" + shape + ".png";
+          })
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", function () {
+            if (!restore_name == "") 
+              return shapes_positions_this.w;
+            return  w*0.05;
+          })
+          .attr("height", function () {
+            if (!restore_name == "") 
+              return shapes_positions_this.h;
+            return  w*0.05;
+          })
+          .attr("id", name)
+          .attr("transform", function() {
+            if (!restore_name == "") {
+              let shape_x = shapes_positions_this.x;
+              let shapy_y = shapes_positions_this.y;
+              let theta = shapes_positions_this.theta;
+              let scale = shapes_positions_this.scale;
+              let scale_save = shapes_positions_this.scale_save;
+              let x_center = shapes_positions_this.w/2;
+              let y_center = shapes_positions_this.h/2;
+
+              let transformation = 'translate(' + shape_x + ',' + shape_y + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + scale + ')'; 
+              return transformation;
+            }
+          })
+          .call(dragshape)
+          .on('click', function(e) {
+            let shape_x = parseFloat(shapes_positions[name].x);
+            let shape_y = parseFloat(shapes_positions[name].y);
+            let shape_w = parseFloat(d3.select('#' + name).attr("width"));
+            let shape_h = parseFloat(d3.select('#' + name).attr("height"));
+
+            current_shape = name;
+
+            if (event.altKey) {
+              if (!keydown) {
+                keydown = true;
+
+                svg.append("rect")
+                .attr("x", shape_x)
+                .attr("y", shape_y)
+                .attr("fill", "none")
+                .attr("stroke", "red")
+                .attr("stroke-width", 3)
+                .attr("width", shape_w)
+                .attr("height", shape_h)
+                .attr("id", "entity_highlight");
+
+                svg.append("circle")
+                .attr("cx", shape_x + shape_w)
+                .attr("cy", shape_y + shape_h)
+                .attr("fill", "red")
+                .attr("r", 35)
+                .attr("id", "delete_button")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("text")
+                .attr("x", shape_x + shape_w-5)
+                .attr("y", shape_y + shape_h+5)
+                .text("X")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "delete_text")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("circle")
+                .attr("cx", shape_x + shape_w)
+                .attr("cy", shape_y)
+                .attr("fill", "red")
+                .attr("r", 35)
+                .attr("id", "rotate_button")
+                .call(rotate);
+
+                svg.append("text")
+                .attr("x", shape_x + shape_w-5)
+                .attr("y", shape_y + 5)
+                .text("R")
+                .style("font-size", "50px")
+                .style('fill', 'white')
+                .attr("id", "rotate_text")
+                .call(rotate);
+
+                svg.append("circle")
+                .attr("cx", shape_x)
+                .attr("cy", shape_y)
+                .attr("fill", "red")
+                .attr("r", 35)
+                .attr("id", "scale_button")
+                .call(scale_interaction);
+
+                svg.append("text")
+                .attr("x", shape_x -5)
+                .attr("y", shape_y + 5)
+                .text("S")
+                .style("font-size", "50px")
+                .style('fill', 'white')
+                .attr("id", "scale_text")
+                .call(scale_interaction);
+
+
+              }
+              else {
+                keydown = false;
+                d3.select("#entity_highlight").remove();
+                d3.select("#delete_button").remove();
+                d3.select("#delete_text").remove();
+                d3.select("#rotate_button").remove();
+                d3.select("#rotate_text").remove();
+                d3.select("#scale_button").remove();
+                d3.select("#scale_text").remove();
+              }
+              
+            }
+          });
+    }
+
+    let rc_icons_size = {{rc_icons_size | tojson}};
+    let rc_icons = {{rc_icons | tojson}};
+    
+    let keydown = false;
+    
+
+    function add_entity(entity, restore_name, shapes_positions_this) {
+      let name = "entity_" + entity.replace(/[^a-zA-Z0-9]/g, '') + shapes_counter.toString();
+      shapes_counter += 1;
+
+      let rc_width = rc_icons_size[entity][0];
+      let rc_height = rc_icons_size[entity][1];
+
+      if (restore_name == "") {
+        let w_temp = rc_width;
+        let h_temp = rc_width;
+
+        // icon size too large, make smaller
+        if (rc_width > w*100) {
+          w_temp = rc_width*0.2;
+          h_temp = rc_width*0.2;
+        }
+
+        // icon size too small, make larger
+        if (rc_width < w*0.1) {
+          w_temp = rc_width*5;
+          h_temp = rc_width*5;
+        }
+        
+        shapes_positions[name] = {"x": 0, "y": 0, "w": w_temp, "h": h_temp, "theta": 0, "scale": 1, "scale_save": 1, "image_name": entity, "id": name, "type": "entity"}; // default x, y position
+      }
+      else {
+        name = restore_name;
+
+        // override current entity parameters
+        let shape_x = shapes_positions_this.x;
+        let shapy_y = shapes_positions_this.y;
+        let shape_w = shapes_positions_this.w;
+        let shapy_h = shapes_positions_this.h;
+        let theta = shapes_positions_this.theta;
+        let scale = shapes_positions_this.scale;
+        let scale_save = shapes_positions_this.scale_save;
+
+        shapes_positions[name] = {"x": shape_x, "y": shape_y, "w": shape_w, "h": shape_h, "theta": theta, "scale": scale, "scale_save": scale_save, "image_name": entity, "id": name, "type": "entity"};
+      }
+
+      
+
+      svg.append("image")
+          .attr("xlink:href", function() {
+            return "/static/cell_icons/" + entity + ".png";
+          })
+         
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("transform", function() {
+            if (!restore_name == "") {
+              let shape_x = shapes_positions_this.x;
+              let shapy_y = shapes_positions_this.y;
+              let theta = shapes_positions_this.theta;
+              let scale = shapes_positions_this.scale;
+              let x_center = shapes_positions_this.w/2;
+              let y_center = shapes_positions_this.h/2;
+
+              let transformation = 'translate(' + shape_x + ',' + shape_y + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + scale + ')'; 
+              console.log(transformation);
+              return transformation;
+            }
+          })
+          .attr("width", function() {
+            if (!restore_name == "")
+              return shapes_positions_this.w;
+            if (rc_width < w*0.1)
+              return rc_width*5;
+            if (rc_width < w*100)
+              return rc_width;
+            return rc_width*0.2;
+          })
+          .attr("height", function() {
+            if (!restore_name == "")
+              return shapes_positions_this.h;
+            if (rc_width < w*0.1)
+              return rc_width*5;
+            if (rc_width < w*100)
+                return rc_width;
+            return rc_width*0.2;
+          })
+          .attr("id", name)
+          .call(dragshape)
+          .lower()
+          .on('click', function(e) {
+            let shape_x = parseInt(shapes_positions[name].x);
+            let shape_y = parseInt(shapes_positions[name].y);
+
+            let shape_w = parseFloat(d3.select('#' + name).attr("width"));
+            let shape_h = parseFloat(d3.select('#' + name).attr("height"));
+
+            current_shape = name;
+
+            if (event.altKey) {
+              if (!keydown) {
+                keydown = true;
+
+                let radius = 35;
+
+                svg.append("rect")
+                .attr("x", shape_x)
+                .attr("y", shape_y)
+                .attr("fill", "none")
+                .attr("stroke", "red")
+                .attr("stroke-width", 3)
+                .attr("width", shape_w)
+                .attr("height", shape_h)
+                .attr("id", "entity_highlight");
+
+                svg.append("circle")
+                .attr("cx", shape_x + shape_w)
+                .attr("cy", shape_y + shape_h)
+                .attr("fill", "red")
+                .attr("r", radius)
+                .attr("id", "delete_button")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("text")
+                .attr("x", shape_x + shape_w-radius/2)
+                .attr("y", shape_y + shape_h+radius/2)
+                .text("X")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "delete_text")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("circle")
+                .attr("cx", shape_x + shape_w)
+                .attr("cy", shape_y)
+                .attr("fill", "red")
+                .attr("r", radius)
+                .attr("id", "rotate_button")
+                .call(rotate);
+
+                svg.append("text")
+                .attr("x", shape_x + shape_w-radius/2)
+                .attr("y", shape_y + radius/2)
+                .text("R")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "rotate_text")
+                .call(rotate);
+
+                 svg.append("circle")
+                .attr("cx", shape_x)
+                .attr("cy", shape_y)
+                .attr("fill", "red")
+                .attr("r", radius)
+                .attr("id", "scale_button")
+                .call(scale_interaction);
+
+                svg.append("text")
+                .attr("x", shape_x -radius/2)
+                .attr("y", shape_y + radius/2)
+                .text("S")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "scale_text")
+                .call(scale_interaction);
+
+
+              }
+              else {
+                keydown = false;
+                d3.select("#entity_highlight").remove();
+                d3.select("#delete_button").remove();
+                d3.select("#delete_text").remove();
+                d3.select("#rotate_button").remove();
+                d3.select("#rotate_text").remove();
+                d3.select("#scale_button").remove();
+                d3.select("#scale_text").remove();
+              }
+              
+            }
+          });
+
+      // raise on top of template canvas image
+      d3.select("#" + name).raise();
+    }
+
+    // draw icons at top as menu
+    function draw_icon_menu() {
+      let w_map = w/2;
+      
+      let icons = {{icons | tojson}};
+      let icons_dict = [];
+      for (let i=0; i < icons.length; i++) {
+        icons_dict.push({"shape": icons[i]});
+      }
+
+      let xScale = d3
+      .scaleBand()
+      .domain(icons)
+      .range([-1*(w_map)/3, (w_map)/3]);
+    
+      svg.selectAll(".icons")
+      .data(icons_dict)
+      .enter()
+      .append("image")
+      .attr("xlink:href", function(d) {
+        return "/static/icons/" + d.shape + ".png";
+      })
+      .attr("x", function(d) {
+        return xScale(d.shape);
+      })
+      .attr("y", -h/2)
+      .attr("width", w_map*0.05)
+      .attr("height", w_map*0.05)
+      .attr("id", function(d) {
+        console.log(d.shape.replace(/[^a-zA-Z0-9]/g, ''));
+        return d.shape.replace(/[^a-zA-Z0-9]/g, '');
+      })
+      .on("mouseover", function () {
+        svg.attr("cursor", "pointer");
+      })
+      .on("mouseout", function () {
+        svg.attr("cursor", "default");
+      })
+      .on('click', function(e, d) {
+        let name = "shape_" + d.shape.replace(/[^a-zA-Z0-9]/g, '') + shapes_counter.toString();
+        shapes_counter += 1;
+
+        shapes_positions[name] = {"x": 0, "y": 0, "w": w*0.05, "h": w*0.05, "theta": 0, "scale": 1, "scale_save": 1, "image_name": d.shape, "id": name, "type": "shape"}; // default x, y position
+
+        let rc_width = w;
+        let rc_height = w;
+
+
+        // add new icon when clicked
+        svg.append("image")
+          .attr("xlink:href", function() {
+            return "/static/icons/" + d.shape + ".png";
+          })
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", w*0.05)
+          .attr("height", w*0.05)
+          .attr("id", name)
+          .call(dragshape)
+          .on('click', function(e) {
+            let shape_x = parseFloat(shapes_positions[name].x);
+            let shape_y = parseFloat(shapes_positions[name].y);
+            let shape_w = parseFloat(d3.select('#' + name).attr("width"));
+            let shape_h = parseFloat(d3.select('#' + name).attr("height"));
+
+            current_shape = name;
+
+            if (event.altKey) {
+              if (!keydown) {
+                keydown = true;
+
+                let radius = 35;
+
+                svg.append("rect")
+                .attr("x", shape_x)
+                .attr("y", shape_y)
+                .attr("fill", "none")
+                .attr("stroke", "red")
+                .attr("stroke-width", 3)
+                .attr("width", shape_w)
+                .attr("height", shape_h)
+                .attr("id", "entity_highlight");
+
+                svg.append("circle")
+                .attr("cx", shape_x + shape_w)
+                .attr("cy", shape_y + shape_h)
+                .attr("fill", "red")
+                .attr("r", radius)
+                .attr("id", "delete_button")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("text")
+                .attr("x", shape_x + shape_w-radius/2)
+                .attr("y", shape_y + shape_h+radius/2)
+                .text("X")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "delete_text")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("circle")
+                .attr("cx", shape_x + shape_w)
+                .attr("cy", shape_y)
+                .attr("fill", "red")
+                .attr("r", radius)
+                .attr("id", "rotate_button")
+                .call(rotate);
+
+                svg.append("text")
+                .attr("x", shape_x + shape_w-radius/2)
+                .attr("y", shape_y + radius/2)
+                .text("R")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "rotate_text")
+                .call(rotate);
+
+                svg.append("circle")
+                .attr("cx", shape_x)
+                .attr("cy", shape_y)
+                .attr("fill", "red")
+                .attr("r", radius)
+                .attr("id", "scale_button")
+                .call(scale_interaction);
+
+                svg.append("text")
+                .attr("x", shape_x -radius/2)
+                .attr("y", shape_y + radius/2)
+                .text("S")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "scale_text")
+                .call(scale_interaction);
+
+
+              }
+              else {
+                keydown = false;
+                d3.select("#entity_highlight").remove();
+                d3.select("#delete_button").remove();
+                d3.select("#delete_text").remove();
+                d3.select("#rotate_button").remove();
+                d3.select("#rotate_text").remove();
+                d3.select("#scale_button").remove();
+                d3.select("#scale_text").remove();
+              }
+              
+            }
+          });
+
+      });
+
+      // draw box around icons to separate them
+      svg.append("rect")
+      .attr("x", -1*(w_map)/3)
+      .attr("y", -h/2)
+      .attr("width", w_map/2 + 750)
+      .attr("height", w_map*0.05)
+      .style("stroke", "red")
+      .style("fill", "none")
+      .attr('stroke-width', '3')
+      .attr("id", "icon_menu_border");
+    }
+
+    draw_icon_menu();
+
+    let text_counter = {{text_counter | tojson}};
+    let template_word_cell_matched = []; 
+    text_counter = parseInt(text_counter);
+
+    function add_text_icon() {
+      let w_map = w/4;
+      
+      svg.append("text")
+      .attr("x", w_map - 500)
+      .attr("y", -h/2+ 90)
+      .style("font-size", "64px")
+      .text("Add Text")
+      .style('fill', 'black')
+      .attr("id", "add_text")
+      .on("mouseover", function () {
+        svg.attr("cursor", "pointer");
+      })
+      .on("mouseout", function () {
+        svg.attr("cursor", "default");
+      })
+      .on("click", function() {
+        const divEle = document.getElementById("inputFields");
+        divEle.innerHTML += `
+        <div>
+          <input type="text" id = "add_text_input" placeholder="Enter text" class="input-field"  onkeydown="add_text_enter(this, '', null)" style="width: 550px; height: 100px; font-size:65px;">
+        </div>`;
+
+        divEle.style.position = "absolute";
+        divEle.style.left = w-5*margin.left +'px';
+        divEle.style.top = 2.5*margin.top  +'px';
+
+      });
+
+    }
+
+    function add_text_enter(ele, restore_name, shapes_positions_this) {
+      let w_map = w/4;
+
+      if((event.key === 'Enter') || (restore_name != '')) {
+          let text_value = '';
+
+          if (event.key === 'Enter') {
+             text_value = document.getElementById('add_text_input').value;
+              document.getElementById("add_text_input").remove();
+          }
+          else {
+            text_value = shapes_positions_this.text_value;
+          }
+         
+          let name = "text_" + text_counter.toString();
+          text_counter += 1;
+
+          if (restore_name == "") {
+            shapes_positions[name] = {"x": 0, "y": 0, "w": null, "h": null, "theta": 0, "scale": 1, "scale_save": 1, "text_value": text_value, "id": name, "type": "text"}; // default x, y position
+          }
+          else {
+            name = restore_name;
+
+            // override current entity parameters
+            let shape_x = shapes_positions_this.x;
+            let shapy_y = shapes_positions_this.y;
+            let theta = shapes_positions_this.theta;
+            let scale = shapes_positions_this.scale;
+            let scale_save = shapes_positions_this.scale_save;
+
+            shapes_positions[name] = {"x": shape_x, "y": shape_y, "w": null, "h": null, "theta": theta, "scale": scale, "scale_save": scale_save, "text_value": text_value, "id": name, "type": "text"};
+          }
+
+
+          svg.append("text")
+          .attr("x", 0)
+          .attr("y", 0)
+          .style("font-size", "75px")
+          .text(text_value)
+          .style('fill', 'black')
+          .call(dragshape)
+          .attr("transform", function() {
+            if (!restore_name == "") {
+              let shape_x = shapes_positions_this.x;
+              let shapy_y = shapes_positions_this.y;
+              let theta = shapes_positions_this.theta;
+              let scale = shapes_positions_this.scale;
+              let str_length = shapes_positions_this.text_value.length * 18 * scale;
+              let x_center = str_length/2;
+              let y_center = 1;
+              let transformation = 'translate(' + shape_x + ',' + shape_y + ') rotate(' + theta + ',' + x_center + ',' + y_center + ') scale(' + scale + ')'; 
+              console.log(transformation);
+              return transformation;
+            }
+          })
+          .attr("id", name)
+          .on('click', function(e) {
+            let shape_x = parseInt(shapes_positions[name].x);
+            let shape_y = parseInt(shapes_positions[name].y);
+            let theta = parseInt(shapes_positions[name].theta);
+
+
+            let shape_w = text_value.length * 18 * shapes_positions[name].scale;
+            let shape_h = 36 * shapes_positions[name].scale;
+
+            current_shape = name;
+
+            if (event.altKey) {
+              if (!keydown) {
+                keydown = true;
+
+                // draw border to be 2x the size of the text to account for rotation
+                // take larger of width/height as the border size
+                let shape_size = 0;
+                if (shape_h > shape_w)
+                  shape_size = shape_h;
+                else
+                  shape_size = shape_w*0.9;
+
+                svg.append("rect")
+                .attr("x", shape_x-shape_size/2)
+                .attr("y", shape_y-shape_size)
+                .attr("fill", "none")
+                .attr("stroke", "red")
+                .attr("stroke-width", 3)
+                .attr("width", 2*shape_size)
+                .attr("height", 2*shape_size)
+                .attr("id", "entity_highlight");
+                
+
+                svg.append("circle")
+                .attr("cx", shape_x+1.5*shape_size)
+                .attr("cy", shape_y+shape_size)
+                .attr("fill", "red")
+                .attr("r", 35)
+                .attr("id", "delete_button")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("text")
+                .attr("x", shape_x+1.5*shape_size-15)
+                .attr("y", shape_y+shape_size+15)
+                .text("X")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "delete_text")
+                .on('click', function(e, d) {
+                  // if clicked, delete entity
+                  d3.select("#" + name).remove();
+
+                  keydown = false;
+                  d3.select("#entity_highlight").remove();
+                  d3.select("#delete_button").remove();
+                  d3.select("#delete_text").remove();
+                  d3.select("#rotate_button").remove();
+                  d3.select("#rotate_text").remove();
+                  d3.select("#scale_button").remove();
+                  d3.select("#scale_text").remove();
+
+                  delete shapes_positions[current_shape];
+                });
+
+                svg.append("circle")
+                .attr("cx", shape_x+1.5*shape_size)
+                .attr("cy", shape_y-shape_size)
+                .attr("fill", "red")
+                .attr("r", 35)
+                .attr("id", "rotate_button")
+                .call(rotate);
+
+                svg.append("text")
+                .attr("x", shape_x+1.5*shape_size-15)
+                .attr("y", shape_y-shape_size+15)
+                .text("R")
+                .style('fill', 'white')
+                .style("font-size", "50px")
+                .attr("id", "rotate_text")
+                .call(rotate);
+
+                 svg.append("circle")
+                .attr("cx", shape_x-shape_size/2)
+                .attr("cy", shape_y-shape_size)
+                .attr("fill", "red")
+                .attr("r", 35)
+                .attr("id", "scale_button")
+                .call(scale_interaction);
+
+                svg.append("text")
+                .attr("x", shape_x-shape_size/2-15)
+                .attr("y", shape_y-shape_size+15)
+                .text("S")
+                .style('fill', 'white')
+                .style("font-size", "56px")
+                .attr("id", "scale_text")
+                .call(scale_interaction);
+
+
+              }
+              else {
+                keydown = false;
+                d3.select("#entity_highlight").remove();
+                d3.select("#delete_button").remove();
+                d3.select("#delete_text").remove();
+                d3.select("#rotate_button").remove();
+                d3.select("#rotate_text").remove();
+                d3.select("#scale_button").remove();
+                d3.select("#scale_text").remove();
+              }
+              
+            }
+          });;
+      }
+    }
+
+    add_text_icon();
+
+
+    // define svg elements outside to share with template_click function
+    let node = null;
+    let link = null;
+    let simulation = null;
+    let organ_clicked = "";
+    let organ_clicked_id = "";
+    let states_index = {{states_index | tojson}};
+    states_index = parseInt(states_index);
+    
+    
+    let visibility = [];
+
+    function tick() {
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+        
+
+          node.attr("transform", function (d) {
+            let x_dist = (d.x - w*0.01);
+            let y_dist = (d.y - w*0.01);
+
+            return "translate(" + x_dist + "," + y_dist + ")";
+          });
+    }
+
+
+    plotCells_hierarchy_with_interaction(genes_iter, genes_only, max_cells, total_genes);
+
+    function save_progress() {
+      simulation.stop();
+
+      let shapes_positions_copy = {};
+      let template_word_cell_matched_copy = [];
+
+      for (const [key, value] of Object.entries(shapes_positions)) {
+
+        shape_x = value['x'];
+        shape_y = value['y'];
+        shape_w = value['w'];
+        shape_h = value['h'];
+        shape_theta = value['theta'];
+        shape_scale = value['scale'];
+        shape_scale_save = value['scale_save'];
+        image_name = value["image_name"];
+        text_value = value["text_value"];
+        id = value["id"];
+        type = value["type"];
+
+        let dict_copy = {"x": shape_x, "y": shape_y, "w": shape_w, "h": shape_h, "theta": shape_theta, "scale": shape_scale, "scale_save": shape_scale_save, "image_name": image_name, "text_value": text_value, "id": id, "type": type};
+        shapes_positions_copy[id] = dict_copy
+      }
+
+      for (let i=0; i < template_word_cell_matched.length; i++) {
+        template_word_cell_matched_copy.push(template_word_cell_matched[i]);
+      }
+
+
+      let nodes_copy = [];
+      let links_copy = [];
+
+      for (let i=0; i < nodes.length; i++) {
+        let fx = nodes[i].fx;
+        let fy = nodes[i].fy;
+        let id = nodes[i].id;
+        let index = nodes[i].index;
+        let level = nodes[i].level;
+        let name = nodes[i].name;
+        let type = nodes[i].type;
+        let type_count = nodes[i].type_count;
+        let vx = nodes[i].vx;
+        let vy = nodes[i].vy;
+        let x = nodes[i].x;
+        let y = nodes[i].y;
+        let node_new = {"fx": fx, "fy": fy, "id": id, "index": index, "level": level, "name": name, "type": type, "type_count": type_count, "vx": vx, "vy": vy, "x": x, "y": y, "px": x, "py": y};
+
+        nodes_copy.push(node_new);
+      }
+
+     for (let i=0; i < links.length; i++) {
+        let index = links[i].index;
+        let source = links[i].source;
+        let target = links[i].target;
+
+        let source_dict = {"fx": source.fx, "fy": source.fy, "id": source.id, "index": source.index, "level": source.level, "name": source.name, "type": source.type, "type_count": source.type_count, "vx": source.vx, "vy": source.vy, "x": source.x, "y": source.y, "px": source.x, "py": source.y};
+
+        let target_dict = {"fx": target.fx, "fy": target.fy, "id": target.id, "index": target.index, "level": target.level, "name": target.name, "type": target.type, "type_count": target.type_count, "vx": target.vx, "vy": target.vy, "x": target.x, "y": target.y, "px": target.x, "py": target.y};
+
+        let link_new = {"index": index, "source": source_dict, "target": target_dict};
+
+        links_copy.push(link_new);
+        
+      }
+
+      states[states_index] = {'nodes': nodes_copy, 'links': links_copy, 'shapes_positions': shapes_positions_copy, 'template_word_cell_matched': template_word_cell_matched_copy};
+
+       // get user input label for state
+      let state_label = document.getElementsByName('Progress Label')[0].value;
+
+      // save current svg as image to use as thumbnail later
+      // https://stackoverflow.com/questions/41334881/detect-when-user-accepts-to-download-a-file
+      // https://stackoverflow.com/questions/77761411/how-can-i-wait-for-an-image-to-download-javascript
+      async function asyncDownload() {
+
+        await downloadStateThumbnail(states_index, state_label);
+
+        document.getElementById("states").value = JSON.stringify(states);
+        states_index += 1;
+        document.getElementById("states_index").value = states_index;
+        document.getElementById("shapes_counter").value = shapes_counter;
+        document.getElementById("text_counter").value = text_counter;
+        document.getElementById("template_words_match").value = template_word_cell_matched;
+
+        fetch('/context_map', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            'states': states,
+            'states_index': states_index, 
+            'shapes_counter': shapes_counter,                      
+            'text_counter': text_counter,                      
+            'template_words_match': template_word_cell_matched
+          })
+        }).then(() => {
+            window.location.reload();
+          });
+
+      }
+
+      asyncDownload();
+
+
+    }
+
+    let curr_state = null;
+
+    function select_state(select_state_index) {
+
+      nodes = states[select_state_index]['nodes'];
+      links = states[select_state_index]['links'];
+      template_word_cell_matched = states[select_state_index]['template_word_cell_matched'];
+
+      curr_state = parseInt(select_state_index);
+
+      svg.selectAll(".node").remove();
+      svg.selectAll(".link").remove();
+      d3.select("#human").remove();
+
+      plotCells_hierarchy_with_interaction(genes_iter, genes_only, max_cells, total_genes);
+
+      // clear current entities from canvas
+      d3.select("svg")
+      .selectAll("*")
+      .filter(function() {
+          return (this.id.includes('shape_') || this.id.includes('entity_') || this.id.includes('text_'));
+      }).remove();
+
+      // now draw entities from selected state
+      shapes_positions_temp = states[select_state_index]['shapes_positions'];
+      // reset shapes storage, will add when each element is added
+      shapes_positions = {}
+
+      for (const [key, value] of Object.entries(shapes_positions_temp)) {
+        shape_x = value['x'];
+        shape_y = value['y'];
+        shape_w = value['w'];
+        shape_h = value['h'];
+        shape_theta = value['theta'];
+        shape_scale = value['scale'];
+        shape_scale_save = value['scale_save'];
+        image_name = value["image_name"];
+        text_value = value["text_value"];
+        id = value["id"];
+        type = value["type"];
+
+        let shapes_positions_this = null;
+
+        if (type == 'entity') {
+          shapes_positions_this = {'x': shape_x, 'y': shape_y, 'w': shape_w, 'h': shape_h, 'theta': shape_theta, 'scale': shape_scale, 'scale_save': shape_scale_save, 'image_name': image_name, 'id': id, 'type': type};
+
+          add_entity(image_name, id, shapes_positions_this);
+        }
+        else if (type == "text") {
+          shapes_positions_this = {'x': shape_x, 'y': shape_y, 'w': shape_w, 'h': shape_h, 'theta': shape_theta, 'scale': shape_scale, 'scale_save': shape_scale_save, 'text_value': text_value, 'id': id, 'type': type};
+
+          add_text_enter(text_value, id, shapes_positions_this);
+        }
+        else { // shape
+          shapes_positions_this = {'x': shape_x, 'y': shape_y, 'w': shape_w, 'h': shape_h, 'theta': shape_theta, 'scale': shape_scale, 'scale_save': shape_scale_save, 'image_name': image_name, 'id': id, 'type': type};
+
+          add_shape(image_name, id, shapes_positions_this);
+        }
+
+      }
+
+    }
+
+
+    function progress_thumbnail_click(progress_thumbnail) {
+      let select_state_index = progress_thumbnail.split("/")[3].split(";")[1].split(".")[0].split("_")[1].toString();
+      select_state(select_state_index);
+    }
+
+
+    function downloadStateThumbnail(states_index, state_label)
+    {
+
+      return new Promise((resolve, reject) => {
+        // hide elements of the svg before we download thumbnail
+
+        d3.select("#icon_menu_border").remove();
+        d3.select("#add_text").remove();
+
+        let icons = {{icons | tojson}};
+        for (let i=0; i < icons.length; i++) {
+          let shape_name = icons[i].replace(/[^a-zA-Z0-9]/g, '');
+          d3.select("#" + shape_name).remove();
+
+        }
+
+        // create background since svg technically has no colored background
+        svg.append("rect")
+        .attr('width', svg.style("width"))
+        .attr('height', svg.style("height"))
+        .attr("x", parseInt(svg.style("width")) * (-1/2))
+        .attr("y", parseInt(svg.style("height")) * (-1/2))
+        .attr("fill", "#fbf7f5")
+        .attr("id", "svg_white_bg")
+        .lower();
+
+
+
+        var svgElement = document.querySelector('svg');
+
+        var doSomethingWith = function(canvas) {
+          document.body.appendChild(canvas)
+        };
+
+        // https://stackoverflow.com/questions/34042910/convert-svg-to-png-with-applied-images-as-background-to-svg-elements
+        function parseImages() {
+          var xlinkNS = "http://www.w3.org/1999/xlink";
+          var total, encoded;
+          // convert an external bitmap image to a dataURL
+          var toDataURL = function(image) {
+
+            var img = new Image();
+            // CORS workaround, this won't work in IE<11
+            // If you are sure you don't need it, remove the next line and the double onerror handler
+            // First try with crossorigin set, it should fire an error if not needed
+            img.crossOrigin = 'anonymous';
+
+            img.onload = function() {
+              // we should now be able to draw it without tainting the canvas
+              var canvas = document.createElement('canvas');
+              canvas.width = this.width;
+              canvas.height = this.height;
+              // draw the loaded image
+              canvas.getContext('2d').drawImage(this, 0, 0);
+              // set our <image>'s href attribute to the dataURL of our canvas
+              image.setAttribute('href', canvas.toDataURL());
+              // that was the last one
+              if (++encoded === total) exportDoc();
+            };
+
+            // No CORS set in the response      
+            img.onerror = function() {
+              // save the src
+              var oldSrc = this.src;
+              // there is an other problem
+              this.onerror = function() {
+                console.warn('failed to load an image at : ', this.src);
+                if (--total === encoded && encoded > 0) exportDoc();
+              };
+              // remove the crossorigin attribute
+              this.removeAttribute('crossorigin');
+              // retry
+              this.src = '';
+              this.src = oldSrc;
+            };
+            // load our external image into our img
+            var href = image.getAttribute('href');
+            // really weird bug that appeared since this answer was first posted
+            // we need to force a no-cached request for the crossOrigin be applied
+            img.src = href + (href.indexOf('?') > -1 ? + '&1': '?1');
+          };
+
+          // get an external svg doc to data String
+          var parseFromUrl = function(url, element) {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() {
+              if (this.status === 200) {
+                var response = this.responseText || this.response;
+                var dataUrl = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(response);
+                element.setAttribute('href', dataUrl);
+                if (++encoded === total) exportDoc();
+              }
+              // request failed with xhr, try as an <img>
+              else {
+                toDataURL(element);
+              }
+            };
+            xhr.onerror = function() {
+              toDataURL(element);
+            };
+            xhr.open('GET', url);
+            xhr.send();
+          };
+
+          var images = svgElement.querySelectorAll('image');
+          total = images.length;
+          encoded = 0;
+
+          // loop through all our <images> elements
+          for (var i = 0; i < images.length; i++) {
+            if (!images[i].getAttribute('href')) {
+              if (++encoded === total) exportDoc();
+              continue;
+            }
+
+            var href = images[i].getAttribute('href');
+
+            // check if the image is external
+            if (href.indexOf('data:image') < 0) {
+              // if it points to another svg element
+              if (href.indexOf('.svg') > 0) {
+                parseFromUrl(href, images[i]);
+              } else // a pixel image
+                toDataURL(images[i]);
+            }
+            // else increment our counter
+            else if (++encoded === total) exportDoc();
+          }
+          // if there were no <image> element
+          if (total === 0) exportDoc();
+        }
+
+        var exportDoc = function() {
+          // check if our svgNode has width and height properties set to absolute values
+          // otherwise, canvas won't be able to draw it
+
+          var bbox = svgElement.getBoundingClientRect();
+
+          if (svgElement.width.baseVal.unitType !== 1) svgElement.setAttribute('width', bbox.width);
+          if (svgElement.height.baseVal.unitType !== 1) svgElement.setAttribute('height', bbox.height);
+
+          // serialize our node
+          // var svgData = (new XMLSerializer()).serializeToString(svgElement);
+
+          const data = (new XMLSerializer()).serializeToString(svgElement);
+          const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+
+          const url = URL.createObjectURL(svgBlob);
+          const img = new Image();
+          img.onload = () => {
+              console.log("about to click");
+
+              const bbox = svgElement.getBBox();
+              const canvas_curr = document.createElement('canvas');
+              canvas_curr.width = bbox.width;
+              canvas_curr.height = bbox.height;
+              const context = canvas_curr.getContext('2d');
+
+              context.clearRect(0, 0, canvas_curr.width, canvas_curr.height);
+              context.drawImage(img, 0, 0, bbox.width, bbox.height);
+              URL.revokeObjectURL(url);
+
+              const a = document.createElement('a');
+              a.download = state_label + ';progress_' + (states_index).toString() + '.png';
+              document.body.appendChild(a);
+              a.href = canvas_curr.toDataURL();
+              a.click();
+              a.remove();
+          };
+          img.src = url;
+
+          d3.select("#svg_white_bg").remove(); 
+
+          draw_icon_menu();
+          add_text_icon();
+
+          // lay cover over simulation until simulation ends
+          // viewbox is -w/2, -h/2 so everything is shifted w/2, h/2
+          let top_cover = svg.append('g').attr("id", "cover");
+
+          top_cover.append("rect")
+            .attr('x', -w/2)
+            .attr('y', -h/2)
+            .attr('width', 1.2*w)
+            .attr('height', h)
+            .attr("fill-opacity", 0.7)
+            .attr('fill', '#faf0e6');
+
+
+          top_cover.append("text")
+          .attr("x", -w/4)
+          .attr("y", -h/2 + margin.top)
+          .text("Loading")
+          .style("font-size", "96px")
+          .style('fill', 'darkGreen')
+          .attr("id", "cover_text1");
+
+          top_cover.append("text")
+          .attr("x", w/4)
+          .attr("y", -h/2 + margin.top)
+          .text("Loading")
+          .style("font-size", "96px")
+          .style('fill', 'darkGreen')
+          .attr("id", "cover_text2");
+
+          function blink() {
+            d3.select("#cover_text1").raise();
+            d3.select("#cover_text2").raise();
+
+            d3.select("#cover_text1").transition()
+              .duration(300)
+              .style("fill", "darkGreen")
+              .transition()
+              .duration(300)
+              .style("fill", "white")
+              .on("end", blink)
+
+            d3.select("#cover_text2").transition()
+              .duration(300)
+              .style("fill", "darkGreen")
+              .transition()
+              .duration(300)
+              .style("fill", "white")
+              .on("end", blink)
+          }
+
+          blink();
+
+        };
+
+        parseImages();
+
+
+        // set timeout to make sure image is saved before page reloads to get thumbnails
+        setTimeout(function() {
+          resolve(); // resolves the Promise
+        }, 20000);
+
+     });
+
+    }
+
+    var lineNumber = 0;
+    var lineHeight = 1.2;
+    // https://stackoverflow.com/questions/29144678/wrapping-long-text-in-d3-js
+    function wrap(text, width) {
+        lineNumber = 0;
+        text.each(function() {
+            var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            x = text.attr("x"), //<-- include the x!
+            y = text.attr("y"),
+            dy = text.attr("dy") ? text.attr("dy") : 0; //<-- null check
+            tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
+            while (word = words.pop()) {
+                line.push(word);
+                tspan.text(line.join(" "));
+                if (tspan.node().getComputedTextLength() > width) {
+                    line.pop();
+                    tspan.text(line.join(" "));
+                    line = [word];
+                    tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                }
+            }
+        });
+    }
+
+    // V3: order cells by group to which it belongs
+    function plotCells_hierarchy_with_interaction(genes_iter, genes_only, max_cells, total_genes) { 
+
+      let w_map = 3*w/4;
+
+    // plot legend for colors
+    svg.append("text")
+    .attr("x", w_map/2 + 380)
+    .attr("y", -h/2 + 120)
+    .text("Legend")
+    .style("font-size", "75px")
+    .attr("id", "legend");
+
+    // Control vs Disease legend
+    svg.append("text")
+    .attr("x", w_map/2 + 650)
+    .attr("y", -h/2 + 150)
+    .text("Disease")
+    .style("font-size", "75px")
+    .style('fill', 'orange');
+
+    // Control vs Disease legend
+    svg.append("text")
+    .attr("x", w_map/2 + 650)
+    .attr("y", -h/2 + 220)
+    .text("Control")
+    .style("font-size", "75px")
+    .style('fill', 'green');
+
+
+    entity_colors_list = [];
+
+    for (const [key, value] of Object.entries(entity_colors)) {
+      entity_colors_list.push({name: key, color: value});
+
+    }
+
+    // color list opposite of hierarchy displayed
+    entity_colors_list = entity_colors_list.reverse();
+    entity_colors_list.push({name: "Show All", color: "black"});
+
+
+      let entities = Array.from(new Set(Object.values(entity_type)));
+
+      let xScales = {}; // different domains for different entity types, so that all rows with different node ids are distributed evenly across the page
+
+      entities.forEach(function(entity) {
+
+          // create scale using this as domain
+          xScales[entity] = d3
+              .scaleLinear()
+              .domain([0, 4])
+              .range([-1*(w_map-4*margin.left)/2, (w_map+2*margin.left)/2]);
+
+      });
+
+      let yScale = d3
+        .scaleBand()
+        .domain(entities)
+        .range([-1*(h)/3 - (h)/18, (h)/2]);
+
+
+      let strength = cell_names.length * 0.00001;
+      let distance = max_cells*20;
+
+
+      //define and stop the simulation
+      // https://observablehq.com/@john-guerra/force-directed-adjusted
+      // run simulation once to spread out proteins around cells
+      simulation = d3.forceSimulation()
+                     .force("x", d3.forceX().strength(strength))
+                      .force("y", d3.forceY().strength(strength))         
+                      .force("charge", d3.forceManyBody().strength(-1000))
+                    .force("link", d3.forceLink()
+                    .distance(function(d) { // set distance of link based on number of genes surrounding entity
+                      if (d.source.type == 'cell') {
+                        let n_genes = cell_gene_match[d.source.name].length;
+                        
+                        return n_genes * 5;
+                      }
+                      else if (d.target.type == 'cell') {
+                        let n_genes = cell_gene_match[d.target.name].length;
+                        if (n_genes == 1) {
+                          return n_genes*300;
+                        }
+                        if (n_genes < 3) {
+                          return n_genes*200;
+                        }
+                        if (n_genes < 5) {
+                          return n_genes*120;
+                        }
+                        if (n_genes < 12) {
+                          return n_genes*60;
+                        }
+                        if (n_genes < 20) {
+                          return n_genes*30;
+                        }
+                        if (n_genes < 40) {
+                          return n_genes*15;
+                        }
+                        if (n_genes < 60) {
+                          return n_genes*5;
+                        }
+                        
+                        return n_genes;
+                      }
+                    })
+                    .id(function(d) { return d.id; }))
+                    .alphaMin(0.001) // default values by specify just to be safe
+                    .alpha(1);
+
+      link = svg
+      .selectAll(".link")
+      .data(links)
+      .join("line")
+      .attr("stroke", "black")
+      .attr("stroke-opacity", "0.4")
+      .classed("link", true);
+      
+      var node_drag = d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+
+      node = svg.selectAll(".node")
+      .data(nodes)
+      .enter().append("g")
+      .classed("node", true)
+      .call(node_drag);      
+
+
+      node.append("image")
+          .attr("xlink:href", function(d) {
+            if (d.type == "cell") {
+              for (let k=0; k < rc_icons.length; k++) {
+                let entity_name = rc_icons[k];
+                entity_name = entity_name.toLowerCase().replace(/_/g, ' ');
+                name_singular = d.name.substring(0, d.name.length - 1);
+                if (entity_name.includes(d.name) || entity_name.includes(name_singular))
+                  return "/static/cell_icons/" + rc_icons[k] + ".png"; 
+              }
+
+              return "/static/temp_cell_figs/circle.png";
+              
+            }
+          })
+          .attr("x", -1*w_map*0.08/4 - 40)
+          .attr("y", -1*w_map*0.08/4 - 20)
+          .attr("width", w_map*0.1)
+          .attr("height", w_map*0.1);
+
+      // rect background for text to show up 
+      node.append("rect")
+        .attr("x", -100)
+        .attr("y",40)
+        .attr("width",380)
+        .attr("height",60)
+        .attr("fill", function (d) {
+          if (d.type == "cell")
+            return "white";
+          return "none";
+        })
+        .attr("opacity",0.9);
+
+      node.append("text")
+        .attr("dx", 0)
+        .attr("dy", 80)
+        .style("font-size", function(d) {
+          if (d.type == "cell")
+            return "56px";
+          else
+            return "46px";
+        })
+        .attr("fill", function (d) {
+          if (d.level == levels[0])
+            return "green";
+          if (d.level == levels[1])
+            return "orange";
+
+          if (d.type == "cell")
+            return entity_colors[entity_type[d.name]];
+        })
+        .text(function (d) {
+          return d.name;
+        })
+        
+
+      // lower proteins so we can access the cells for dragging
+      node.each(function (d) {
+        if (d.type != "cell") {
+          d3.select(this).lower();
+        }
+      });
+
+      node.on("mouseover", function(event, d) {
+        if (d.type == "cell") {
+          svg.attr("cursor", "grab");
+        }
+      })
+      .on("mouseout", function(event, d) {
+        svg.attr("cursor", "default");
+      })
+
+
+      simulation.nodes(nodes)
+      simulation.force("link").links(links)
+
+        function dragstarted(event, d) {
+          
+        }
+        
+        function dragged(event, d) {
+
+          if (d.type == "cell") {
+           
+            d.px += event.dx;
+            d.py += event.dy;
+            d.x += event.dx;
+            d.y += event.dy; 
+            d.fx += event.dx;
+            d.fy += event.dy;
+
+
+            // update link lines
+            links.forEach(link => {
+              
+
+                if (link.source.id == d.id) {
+
+                    link.target.px += event.dx;
+                    link.target.py += event.dy;
+                    link.target.x += event.dx;
+                    link.target.y += event.dy; 
+
+                    link.source.px = d.px;
+                    link.source.py = d.py;
+                    link.source.x = d.x;
+                    link.source.y = d.y;
+
+                    // update node positions for the proteins ONLY IF RESTORING STATE otherwise it should sort itself out
+                    nodes.forEach(function (protein) {
+                      if ((protein.id == link.target.id) && curr_state != null) {
+                        protein.px += event.dx;
+                        protein.py += event.dy;
+                        protein.x += event.dx;
+                        protein.y += event.dy; 
+                      }
+                    });
+
+                } else if (link.target.id == d.id) {
+                   
+                    // have to update ALL positions
+                    // no clue what the difference is between f, p, and _
+                    link.source.fx += event.dx;
+                    link.source.fy += event.dy;
+
+                    link.source.px += event.dx;
+                    link.source.py += event.dy;
+                    link.source.x += event.dx;
+                    link.source.y += event.dy; 
+
+                    link.target.fx = d.px;
+                    link.target.fy = d.py;
+
+                    link.target.px = d.px;
+                    link.target.py = d.py;
+                    link.target.x = d.x;
+                    link.target.y = d.y;
+
+                    // update node positions for the proteins ONLY IF RESTORING STATE otherwise it should sort itself out
+                    nodes.forEach(function (protein) {
+                      if ((protein.id == link.source.id) && curr_state != null) {
+                        protein.fx += event.dx;
+                        protein.fy += event.dy;
+
+                        protein.px += event.dx;
+                        protein.py += event.dy;
+                        protein.x += event.dx;
+                        protein.y += event.dy; 
+                      }
+                    });
+                }
+            });
+
+            tick();
+          }
+        }
+        
+        function dragended(event, d) {
+          
+        }
+        
+        
+
+      simulation.on("tick", tick);
+
+      maxIterations = 300;
+      iterationCount = 0;
+
+
+      simulation.on("end", function() {
+       
+        organize_nodes();
+        simulation.nodes(nodes);
+
+        
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+        
+
+          node.attr("transform", function (d) {
+            let x_dist = (d.x - w*0.01);
+            let y_dist = (d.y - w*0.01);
+
+            return "translate(" + x_dist + "," + y_dist + ")";
+          });
+
+          d3.select("#cover").remove();
+            
+
+      });
+
+
+
+      // organize nodes by their cell type after simulation ends
+      function organize_nodes() {
+        nodes.forEach(function (d) {
+          if (d.type == "cell") {
+            
+            let new_fx = xScales[entity_type[d.name]]((d.type_count-1)%5);
+            // stagger y value to avoid overlap
+            let new_fy = yScale(entity_type[d.name]) + h/9 * Math.floor((d.type_count-1)/5);
+
+          
+            // if we are restoring a previous saved state then we can rely on px and py values instead
+            if (d.px && d.py) {
+              // unclear why d.x and d.y had to be set
+              // d.x = d.px;
+              // d.y = d.py;
+              new_fx = d.px;
+              new_fy = d.py;
+            }
+            let d_fx = new_fx - d.x;
+            let d_fy = new_fy - d.y;
+
+            // find all proteins linked to cell
+            // update their locations using deltas for cell
+            links.forEach(link => {
+
+                if (link.source.id == d.id) {
+
+                    link.target.x = link.target.x + d_fx;
+                    link.target.y = link.target.x + d_fx;
+
+                    if (link.target.px && link.target.py) {
+                      link.target.fx = link.target.px + d_fx;
+                      link.target.fy = link.target.py + d_fy;
+                      link.target.x = link.target.px + d_fx;
+                      link.target.y = link.target.py + d_fy;
+                    }
+
+                } else if (link.target.id == d.id) {
+
+                    
+                    link.source.fx = link.source.x + d_fx;
+                    link.source.fy = link.source.y + d_fy;
+
+                    
+                    link.target.x = new_fx;
+                    link.target.y = new_fy;
+
+                    
+                    link.target.px = new_fx;
+                    link.target.py = new_fy;
+
+                    link.source.px += d_fx;
+                    link.source.py += d_fy;
+
+                    // if we are restoring a previous saved state then we can rely on px and py values instead
+                    if (link.source.px && link.source.py) {
+                      link.source.fx = link.source.px + d_fx;
+                      link.source.fy = link.source.py + d_fy;
+                      link.source.x = link.source.px + d_fx;
+                      link.source.y = link.source.py + d_fy;
+                      link.source.px += d_fx;
+                      link.source.py += d_fy;
+                    }
+
+                    // set the positions of the protein nodes, after changing the positions of the links above
+                    nodes.forEach(function (protein) {
+                      if ((protein.id == link.source.id) && (link.source.px && link.source.py)) {
+                          protein.fx += d_fx;
+                          protein.fy += d_fy;
+                          protein.px += d_fx;
+                          protein.py += d_fy;
+                          protein.x += d_fx;
+                          protein.y += d_fy; 
+                        }
+                      });
+
+                }
+            });
+            
+
+            // compute deltas between 
+            d.fx = new_fx; // setting fx , fy here seems to work, as opposed to px, py when drag
+            d.fy = new_fy;
+
+          }
+
+          // if not cell type then protein type so move that too, but only for restoring saved states. otherwise it should just figure out its placement on its own
+          else {
+            // if we are restoring a previous saved state then we can rely on px and py values instead
+            if (d.px && d.py) {
+              d.x = d.px;
+              d.y = d.py;
+              d.fx = d.px;
+              d.fy = d.py;
+            }
+          }
+        });
+      }
+
+      // lay cover over simulation until simulation ends
+      // viewbox is -w/2, -h/2 so everything is shifted w/2, h/2
+      let top_cover = svg.append('g').attr("id", "cover");
+
+      top_cover.append("rect")
+        .attr('x', -w/2)
+        .attr('y', -h/2)
+        .attr('width', 1.2*w)
+        .attr('height', h)
+        .attr("fill-opacity", 0.7)
+        .attr('fill', '#faf0e6');
+
+
+      top_cover.append("text")
+      .attr("x", -w/4)
+      .attr("y", -h/2 + margin.top)
+      .text("Loading")
+      .style("font-size", "96px")
+      .style('fill', 'darkGreen')
+      .attr("id", "cover_text1");
+
+      top_cover.append("text")
+      .attr("x", w/4)
+      .attr("y", -h/2 + margin.top)
+      .text("Loading")
+      .style("font-size", "96px")
+      .style('fill', 'darkGreen')
+      .attr("id", "cover_text2");
+
+      function blink() {
+        d3.select("#cover_text1").raise();
+        d3.select("#cover_text2").raise();
+
+        d3.select("#cover_text1").transition()
+          .duration(300)
+          .style("fill", "darkGreen")
+          .transition()
+          .duration(300)
+          .style("fill", "white")
+          .on("end", blink)
+
+        d3.select("#cover_text2").transition()
+          .duration(300)
+          .style("fill", "darkGreen")
+          .transition()
+          .duration(300)
+          .style("fill", "white")
+          .on("end", blink)
+      }
+
+      blink();
+
+
+      function entity_click(e, d) {
+          // highlight box clicked
+
+          // reset organ highlight to not overlap
+          organ_clicked_id = ""
+          d3.select("#organ_label").remove();
+          human.selectAll("path")
+            .attr("stroke", "none")
+            .attr("stroke-width", 0);
+
+          let ind = entity_colors_list.indexOf(d);
+          d3.select("#group_highlight").remove();
+
+          svg.append("rect")
+          .attr("x", w_map/2 + 370)
+          .attr("y", -h/2 + 150 + ind*90)
+          .attr("width", 250)
+          .attr("height", 90)
+          .attr("id", "group_highlight")
+          .style("stroke", "red")
+          .style("fill", "none")
+          .style("stroke-width", "7px");
+
+          // hide nodes and links including proteins that don't match type clicked
+          if (d.name != "Show All") {
+
+            // reset to show all before filtering for selection
+            let selection = d3.selectAll(".node");
+            selection.style("visibility", "visible");
+            selection = d3.selectAll(".link");
+            selection.style("visibility", "visible");
+
+            // control proteins in orange
+            selection = d3.selectAll(".node")
+              .filter(function(e) {
+                return ((e.type == "protein") && (e.level == levels[1])) ;  
+              });
+            selection.select("text").style("fill", "orange");
+            selection.select("text").style("font-size", "46px");
+            selection.style("text-decoration", "none");
+
+            // disease proteins in green
+            selection = d3.selectAll(".node")
+              .filter(function(e) {
+                return ((e.type == "protein") && (e.level == levels[0])) ;  
+              });
+            selection.select("text").style("fill", "green");
+            selection.select("text").style("font-size", "46px");
+            selection.style("text-decoration", "none");
+
+            let templates = document.getElementsByClassName("templates");
+
+            for (var i=0; i < templates.length; i++) {
+              let template_img = templates[i];
+              template_img.style.visibility = "visible";
+            }
+
+            // start filtering process
+            selection = d3.selectAll(".node")
+              .filter(function(e) {
+                return entity_type[e.name] != d.name;  
+              });
+            selection.style("visibility", "hidden");
+
+            selection = d3.selectAll(".link")
+              .filter(function(e) {
+                return ((entity_type[e.source.name]) != d.name && (entity_type[e.target.name]) != d.name);  
+              });
+            selection.style("visibility", "hidden");
+
+
+
+            // show proteins linked to nodes of this type
+            nodes.forEach(function (item) {
+            if (item.type == "cell") {
+              cell_name = item.name;
+              if (entity_type[cell_name] == d.name) {
+                // find all proteins linked to cell
+                links.forEach(link => {
+                    if (link.source.id == item.id) {
+                      
+                        selection = d3.selectAll(".node")
+                        .filter(function(e) {
+                          return e.id == link.target.id;  
+                        });
+
+                        selection.style("visibility", "visible");
+
+                        
+                    } else if (link.target.id == item.id) {
+                       selection = d3.selectAll(".node")
+                        .filter(function(e) {
+                          return e.id == link.source.id;  
+                        });
+
+                        selection.style("visibility", "visible");
+                    }
+                      
+                });
+              }
+            }
+            });
+
+            // filter template images that have same keywords
+
+            // hide all template images and only show ones that fit selection
+            for (var i=0; i < templates.length; i++) {
+              let template_img = templates[i];
+              template_img.style.visibility = "hidden";
+            }
+
+            for (const [filename, words] of Object.entries(words_list)) {
+              for (let [word, pos] of Object.entries(words)) {
+                word = word.toLowerCase()
+                let word_norm = word.replace(/[^\w\s]/gi, ' '); // replace special characters with space
+                let word_singular = word.substring(0, word_norm.length - 1);
+
+                // word in template image fits into entity group
+                if (entity_type.hasOwnProperty(word)) {
+                  if (entity_type[word] == d.name) {
+
+                     // iterate through template images and find the one that matches this filename and turn off visibility
+                    for (var k=0; k < templates.length; k++) {
+                      let template_img = templates[k];
+
+                      if (template_img.src.includes(filename)) {
+                        template_img.style.visibility = "visible";
+                      }
+                    }
+                  }
+                  
+                } else if (entity_type.hasOwnProperty(word_norm)) {
+                  if (entity_type[word_norm] == d.name) {
+
+                    // iterate through template images and find the one that matches this filename and turn off visibility
+                    for (var k=0; k < templates.length; k++) {
+                      let template_img = templates[k];
+
+                      if (template_img.src.includes(filename)) {
+                        template_img.style.visibility = "visible";
+                      }
+                    }
+                  }
+                }
+
+                else if (entity_type.hasOwnProperty(word_singular)) {
+                  if (entity_type[word_singular] == d.name) {
+
+                    // iterate through template images and find the one that matches this filename and turn off visibility
+                    for (var k=0; k < templates.length; k++) {
+                      let template_img = templates[k];
+
+                      if (template_img.src.includes(filename)) {
+                        template_img.style.visibility = "visible";
+                      }
+                    }
+                  }
+                }
+
+                
+
+              }
+            }
+          }
+
+          // show all nodes
+          else { 
+            let selection = d3.selectAll(".node");
+            selection.style("visibility", "visible");
+            selection = d3.selectAll(".link");
+            selection.style("visibility", "visible");
+
+            // control proteins in orange
+            selection = d3.selectAll(".node")
+              .filter(function(e) {
+                return ((e.type == "protein") && (e.level == levels[1])) ;  
+              });
+            selection.select("text").style("fill", "orange");
+            selection.select("text").style("font-size", "46px");
+            selection.style("text-decoration", "none");
+
+            // disease proteins in green
+            selection = d3.selectAll(".node")
+              .filter(function(e) {
+                return ((e.type == "protein") && (e.level == levels[0])) ;  
+              });
+            selection.select("text").style("fill", "green");
+            selection.select("text").style("font-size", "46px");
+            selection.style("text-decoration", "none");
+
+            let templates = document.getElementsByClassName("templates");
+
+            for (var i=0; i < templates.length; i++) {
+              let template_img = templates[i];
+              template_img.style.visibility = "visible";
+            }
+
+            organ_clicked =  "";
+
+            d3.select("#organ_label").remove();
+
+            human.selectAll("path")
+            .attr("stroke", "none")
+            .attr("stroke-width", 0);
+          }
+        
+        }
+
+      // when clicking the legend rect only show nodes in this cateogry
+      svg.selectAll(".legend_rect")
+      .data(entity_colors_list)
+      .enter()
+      .append("rect")
+        .attr("x", function(d) { return w_map/2 + 370; })
+        .attr("y", function(d, i) {  return -h/2 + 150 + i*90})
+        .attr("width", 250 )
+        .attr("height", 90 )
+        .attr("id", "legend_rect")
+        .style("fill", function(d) {  return d.color} )
+        .on("mouseover", function () {
+          svg.attr("cursor", "pointer");
+        })
+        .on("mouseout", function () {
+          svg.attr("cursor", "default");
+        })
+        .on('click', function(e, d) {
+          entity_click(e, d);
+        });
+
+
+      svg.selectAll(".legend_text")
+      .data(entity_colors_list)
+      .enter()
+      .append("text")
+      .attr("x", function(d) { return w_map/2 + 380; })
+      .attr("y", function(d, i) {  return -h/2+ 150 + i*90 + 60})
+      .text(function(d) {return d.name} )
+      .style("fill", "white")
+      .style("font-size", "60px")
+      .attr("id", "legend_text")
+      .on("mouseover", function () {
+        svg.attr("cursor", "pointer");
+      })
+      .on("mouseout", function () {
+        svg.attr("cursor", "default");
+      })
+      .on('click', function(e, d) {
+        entity_click(e, d);
+      });
+
+
+      // plot human diagram
+      // https://gist.github.com/micahstubbs/2bd455e4c2170ec294f88212b930bb88
+       d3.xml("/static/human.svg").then(function(xml) {
+          var importedNode = document.importNode(xml.documentElement, true);
+
+            human = svg.append("g")
+                        .attr("id", "human");
+
+            d3.select("#human").node().appendChild(importedNode);
+
+            d3.select("#human").select("svg")
+                .attr("x", -w_map + 550)
+                .attr("y", -h/6)
+                .attr("width", w*0.4)
+                .attr("height", w*0.4);
+
+            d3.select("#human").selectAll("path")
+                .on("mouseover", function(event) {
+                    let organ_id = d3.select(this).attr("id");
+
+                    // only highlight organ if path is labeled in human.svg
+                    if (organ_id == null)  {
+                      // if an organ is clicked and highlighted then maintain its label
+                      if (organ_clicked_id)
+                        return;
+
+                      // otherwise don't show label since this organ isn't labeled
+                      d3.select("#organ_label").remove();
+
+                      return;
+                    }
+
+                    d3.select(this)
+                        .attr("stroke-width", 5)
+                        .attr("stroke", "Chartreuse"); 
+
+                    organ_text = organ_id.replace(/_/g, " ").replace(/[0-9]/g, '');
+
+                    // otherwise everything is normal so show organ label
+                    if (organ_clicked_id == "") {
+                      svg.append("text")
+                      .attr("x", -w/2 + 150)
+                      .attr("y", -h/2 + h/3 - 100)
+                      .text(organ_text)
+                      .attr("id", "organ_label")
+                      .style("font-size", "75px");
+                    }
+                    
+                })
+                .on("mouseout", function(event) {
+                    let organ_id = d3.select(this).attr("id");
+                    let organ = d3.select(this).attr("id");
+
+                    if (organ_clicked_id == "") 
+                      d3.select("#organ_label").remove();
+
+                    if (organ == null) {
+                      d3.select(this)
+                          .attr("stroke", "black")
+                          .attr("stroke-width", 0); 
+                      return;
+                    }
+                      
+
+                    if ((organ_id == organ_clicked_id)) {
+                      return;
+                    }
+                    else {
+                      d3.select(this)
+                          .attr("stroke-width", 0)
+                          .attr("stroke", "black"); 
+                    }
+                    
+                })
+                .on("click", function(event) {
+                  // clear last clicked organ before switch to this one
+                  
+                  if (organ_clicked_id != "") {
+                    d3.select("#" + organ_clicked_id)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 0);
+                  }
+                  
+
+                  let organ = d3.select(this).attr("id");
+                  organ_clicked_id = organ;
+
+                  organ = organ.replace(/_/g, "").replace(/[0-9]/g, '').toLowerCase();
+                  if (organ.includes("intestine")) {
+                    organ = "intestine";
+                  }
+
+                  organ_clicked = organ;
+
+                  // highlight path for organ 
+                  d3.select(this)
+                    .attr("stroke", "Chartreuse")
+                    .attr("stroke-width", 5); 
+
+                  organ_text = organ_clicked_id.replace(/_/g, " ").replace(/[0-9]/g, '');
+                  d3.select("#organ_label").remove();
+
+                  svg.append("text")
+                  .attr("x", -w/2 + 150)
+                  .attr("y", -h/2 + h/3 - 100)
+                  .text(organ_text)
+                  .attr("id", "organ_label")
+                  .style("font-size", "75px");
+
+                  // reset all nodes and formatting before filtering
+                 let selection = d3.selectAll(".node");
+                  selection.style("visibility", "visible");
+                  selection = d3.selectAll(".link");
+                  selection.style("visibility", "visible");
+
+                  // control proteins in orange
+                  selection = d3.selectAll(".node")
+                    .filter(function(e) {
+                      return ((e.type == "protein") && (e.level == levels[1])) ;  
+                    });
+                  selection.select("text").style("fill", "orange");
+                  selection.select("text").style("font-size", "46px");
+                  selection.style("text-decoration", "none");
+
+                  // disease proteins in green
+                  selection = d3.selectAll(".node")
+                    .filter(function(e) {
+                      return ((e.type == "protein") && (e.level == levels[0])) ;  
+                    });
+                  selection.select("text").style("fill", "green");
+                  selection.select("text").style("font-size", "46px");
+                  selection.style("text-decoration", "none");
+                  
+                  selection = d3.selectAll(".link");
+                  selection.style("visibility", "visible");
+
+                  d3.select("#group_highlight").remove();
+
+                  // find all genes related to this organ
+                  let relevant_genes = [];
+                  if (organ_genes.hasOwnProperty(organ)) {
+                    relevant_genes = organ_genes[organ];
+                  }
+
+                  let organ_plural = organ + "s";
+
+
+                  let node_ids_shown = [];
+                  let relevant_entities = [];
+
+                  // show proteins linked to nodes of this type
+                  nodes.forEach(function (item) {
+                  if (item.type == "cell") {
+                    cell_name = item.name;
+
+                    // find all proteins linked to cell
+                    links.forEach(link => {
+                      if (link.source.id == item.id) {
+
+                        if (relevant_genes.includes(link.target.name) || (link.source.name == organ) || (link.source.name == organ_plural)) {
+
+                          node_ids_shown.push(item.id);
+                          node_ids_shown.push(link.target.id);
+                          relevant_entities.push(item.name);
+
+                          selection = d3.selectAll(".node")
+                          .filter(function(e) {
+                            return (e.id == link.target.id) && (e.name == link.target.name);  
+                          });
+
+                          selection.select("text").style("fill", "red");
+                          selection.select("text").style("font-size", "46px");
+                          selection.style("text-decoration", "underline");
+
+                          selection = d3.selectAll(".link")
+                          .filter(function(e) {
+                            return (e.source.id == link.source.id);  
+                          });
+
+                          selection.each(function(e) {
+                              node_ids_shown.push(e.target.id);
+                          });
+                          
+                          
+
+                        }
+
+                          
+                      } else if (link.target.id == item.id) {    
+                          
+                         if (relevant_genes.includes(link.source.name) || (link.target.name == organ) || (link.target.name == organ_plural)) {
+
+                          node_ids_shown.push(item.id);
+                          node_ids_shown.push(link.source.id);
+                          relevant_entities.push(item.name);
+
+                          selection = d3.selectAll(".node")
+                          .filter(function(e) {
+                            return (e.id == link.source.id) && (e.name == link.source.name);  
+                          });
+
+                          selection.select("text").style("fill", "red");
+                          selection.select("text").style("font-size", "46px");
+                          selection.style("text-decoration", "underline");
+
+                          selection = d3.selectAll(".link")
+                          .filter(function(e) {
+                            return (e.target.id == link.target.id);  
+                          });
+
+                          selection.each(function(e) {
+                              node_ids_shown.push(e.source.id);
+                          });
+
+                        }
+                          
+                      }
+                          
+                    });
+                  }
+                  });
+
+                  selection = d3.selectAll(".node");
+                  selection.style("visibility", "hidden");
+
+                  selection = d3.selectAll(".link");
+                  selection.style("visibility", "hidden");
+
+                  selection = d3.selectAll(".node")
+                  .filter(function(e) {
+                    return (node_ids_shown.includes(e.id));  
+                  });
+
+                  selection.style("visibility", "visible");
+
+                  selection = d3.selectAll(".link")
+                  .filter(function(e) {
+                    return (node_ids_shown.includes(e.source.id) || node_ids_shown.includes(e.target.id));  
+                  });
+
+                  selection.style("visibility", "visible");
+
+                  // now also filter template images to only show the ones that contain words involving this organ or relevant genes and/entities
+                  let templates = document.getElementsByClassName("templates");
+
+                  for (var i=0; i < templates.length; i++) {
+                    let template_img = templates[i];
+                    template_img.style.visibility = "hidden";
+                  }
+
+                  for (const [filename, words] of Object.entries(words_list)) {
+                    for (let [word, pos] of Object.entries(words)) {
+                      word = word.toLowerCase()
+                      let word_norm = word.replace(/[^\w\s]/gi, ' '); // replace special characters with space
+
+                      // word in template image mentions this organ
+                      if (word.split(" ").includes(organ) || word_norm.split(" ").includes(organ)) {
+                           // iterate through template images and find the one that matches this filename and turn on visibility
+                          for (var k=0; k < templates.length; k++) {
+                            let template_img = templates[k];
+
+                            if (template_img.src.includes(filename)) {
+                              template_img.style.visibility = "visible";
+                            }
+                          }
+                        }
+
+                      // word in template image mentions an entity relevant to this organ
+                      for (var entity of relevant_entities) {
+                        if (word.split(" ").includes(entity) || word_norm.split(" ").includes(entity)) {
+                          // iterate through template images and find the one that matches this filename and turn on visibility
+                          for (var k=0; k < templates.length; k++) {
+                            let template_img = templates[k];
+
+                            if (template_img.src.includes(filename)) {
+                              template_img.style.visibility = "visible";
+                            }
+                          }
+                        }
+                      }
+                        
+                      // word in template image mentions proteins related to this organ
+                      for (var gene of relevant_genes) {
+                        if (word.split(" ").includes(gene.toLowerCase()) || word_norm.split(" ").includes(gene.toLowerCase())) {
+                          // iterate through template images and find the one that matches this filename and turn on visibility
+                          for (var k=0; k < templates.length; k++) {
+                            let template_img = templates[k];
+
+                            if (template_img.src.includes(filename)) {
+                              template_img.style.visibility = "visible";
+                            }
+                          }
+                        }
+                      }
+                       
+                    }
+                  }
+
+                });
+        });
+      
+    }
+
+
+    function template_image_click(template_image) {
+      // get width and height of image
+      let templates = document.getElementsByClassName("templates");
+      let img_width = 0;
+      let img_height = 0;
+
+
+      for (var i=0; i < templates.length; i++) {
+        let template_img = templates[i];
+
+        if (template_img.getAttribute("src") == template_image) {
+        
+          img_width = template_img.naturalWidth;
+          img_height = template_img.naturalHeight;
+        }
+      }
+
+      let w_map = w-2*margin.left-2*margin.right;
+      let h_map = h-2*margin.bottom-2*margin.top;
+
+      let xScale = d3
+        .scaleLinear()
+        .domain([0, img_width])
+        .range([-1*w_map, 0]); 
+
+      let yScale = d3
+        .scaleLinear()
+        .domain([0, img_height])
+        .range([-1*h_map - h_map/5, 0]); // shift image up so we have more room to work 
+
+
+      let img_name = template_image.split("/");
+      img_name = img_name[img_name.length - 1];
+
+      d3.select("#curr_template").remove();
+      d3.select("#curr_template_adjacent").remove();
+
+      // set image as canvas background
+      svg.append("image")
+          .attr("xlink:href", function() {
+            return template_image;
+          })
+          .attr("x", 
+            function() {
+              return xScale(img_width/2);
+            })
+          .attr("y", 
+            function() {
+              return yScale(img_height/2);
+            })
+          .attr("width", function() {
+            return w-500;
+          })
+          .attr("height", function() {
+            return h-2.5*margin.bottom;
+          })
+          .attr("opacity", "0.2")
+          .attr("id", "curr_template");
+
+      // also place image next to exemplar scrollbar 
+      svg_template.append("image")
+          .attr("xlink:href", function() {
+            return template_image;
+          })
+          .attr("x", 
+            function() {
+              return xScale(img_width/2 - 100);
+            })
+          .attr("y", 
+            function() {
+              return yScale(img_height/2);
+            })
+          .attr("width", function() {
+            return w-500;
+          })
+          .attr("height", function() {
+            return h-2.5*margin.bottom;
+          })
+          .attr("opacity", "1")
+          .attr("id", "curr_template_adjacent");
+
+      d3.select("#curr_template").lower();
+      document.getElementById('curr_template').height = (h-margin.bottom).toString() + 'px';
+
+      // now go through all the words extracted from the image and determine whether there are any matches to the entity names
+
+      let words = words_list_lower[img_name];
+
+      let xScaleWord = d3
+        .scaleLinear()
+        .domain([0, img_width*0.8]) // tighter bound to shift to the right
+        .range([-1*w_map/2, w_map/2+300]); 
+
+      let yScaleWord = d3
+        .scaleLinear()
+        .domain([0, img_height])
+        .range([-1*h_map/3 - h_map/5, h_map/3 - h_map/5]); // tighter bound to keep entities together within view
+      
+
+      for (var cell in cell_gene_match) {
+       // if entity is already matched from a previous template image don't move it
+        if (template_word_cell_matched.indexOf(cell) > -1)
+          continue;
+
+        for (var word in words) {
+          // check if entity name matches anything from the image
+          let cell_singular = cell.substring(0, cell.length - 1);
+          let word_singular = word.substring(0, word.length - 1);
+          // let cell_plural = cell + "s";
+
+          if ((cell === word) || (cell === word_singular) || (word === cell_singular) || (word.includes(cell_singular))) {
+            // if entity is already matched from a previous template image don't move it
+            if (template_word_cell_matched.indexOf(cell) > -1)
+              continue;
+
+            // scale location to fit svg
+            let pos = words[word];
+            let word_x = pos[0];
+            let word_y = pos[1];
+            word_x = xScaleWord(word_x); 
+            word_y = yScaleWord(word_y); 
+
+            // move node and proteins to new location
+            nodes.forEach(function (d) {
+              if ((d.type == "cell") && (d.name == cell)) {
+                template_word_cell_matched.push(cell);
+
+                let new_fx = word_x;
+                let new_fy = word_y;
+                let d_fx = new_fx - d.x;
+                let d_fy = new_fy - d.y;
+
+                // find all proteins linked to cell
+                // update their locations using deltas for cell
+                links.forEach(link => {
+                    if (link.source.id == d.id) {
+                        link.target.fx = link.target.x + d_fx;
+                        link.target.fy = link.target.y + d_fy;
+
+                        link.target.x = link.target.x + d_fx;
+                        link.target.y = link.target.y + d_fy; 
+
+                        link.source.x = word_x;
+                        link.source.y = word_y;
+
+                        // always set px and py, regardless of progress state loaded or not
+                        link.source.px = word_x;
+                        link.source.py = word_y;
+                        link.target.px = link.target.x + d_fx;
+                        link.target.py = link.target.y + d_fy;
+
+                        nodes.forEach(function (protein) {
+                        if ((protein.id == link.target.id) && curr_state) {
+                            protein.fx += d_fx;
+                            protein.fy += d_fy;
+                            protein.px += d_fx;
+                            protein.py += d_fy;
+                            protein.x += d_fx;
+                            protein.y += d_fy; 
+                          }
+                        });
+
+                    } else if (link.target.id == d.id) {
+                       
+                        link.source.fx = link.source.x + d_fx;
+                        link.source.fy = link.source.y + d_fy;
+                        
+                        link.source.x = link.source.x + d_fx;
+                        link.source.y = link.source.y + d_fy; 
+                        link.target.x = word_x;
+                        link.target.y = word_y;
+
+
+                        // always set px and py, regardless of progress state loaded or not
+                        link.source.px = link.source.x + d_fx;
+                        link.source.py = link.source.y + d_fy;
+                        link.target.px = word_x;
+                        link.target.py = word_y;
+
+                        nodes.forEach(function (protein) {
+                        if ((protein.id == link.source.id) && curr_state!=null) {
+
+                          protein.fx += d_fx;
+                          protein.fy += d_fy;
+                          protein.px += d_fx;
+                          protein.py += d_fy;
+                          protein.x += d_fx;
+                          protein.y += d_fy; 
+                        }
+                      });
+
+                    }
+                });
+
+                // compute deltas between 
+                d.fx = new_fx; // setting fx , fy here seems to work, as opposed to px, py when drag
+                d.fy = new_fy;
+              }
+            });
+          }
+        }
+      }
+
+      // move all other nodes and proteins out of the way
+      let num_no_match = Object.keys(cell_gene_match).length - template_word_cell_matched.length;
+      // these scales are independent of image size
+      let xScaleRemain = d3
+        .scaleLinear()
+        .domain([0, num_no_match])
+        .range([-1*w_map/2, w_map/2+800]); 
+      let yScaleRemain = d3
+        .scaleLinear()
+        .domain([0, h_map])
+        .range([-1*h_map/2, h_map/2]); 
+
+      let count_no_match = 0;
+
+      nodes.forEach(function (d) {
+
+        if ((d.type == "cell") && (template_word_cell_matched.indexOf(d.name) === -1)) {
+
+          let new_fx = xScaleRemain(count_no_match);
+          let new_fy = 0;
+          if (count_no_match % 3 == 0) {
+            new_fy = yScaleRemain(h_map - 100);
+          }
+          else if (count_no_match % 3 == 1) {
+            new_fy = yScaleRemain(h_map - 300);
+          }
+          else {
+            new_fy = yScaleRemain(h_map - 500);
+          }
+
+
+          let d_fx = new_fx - d.x;
+          let d_fy = new_fy - d.y;
+
+          count_no_match += 1;
+
+          // find all proteins linked to cell
+          // update their locations using deltas for cell
+          links.forEach(link => {
+              if (link.source.id == d.id) {
+
+                  link.target.fx = link.target.x + d_fx;
+                  link.target.fy = link.target.y + d_fy;
+
+                  link.target.x = link.target.x + d_fx;
+                  link.target.y = link.target.y + d_fy; 
+
+                  link.source.x = new_fx;
+                  link.source.y = new_fy;
+
+                  // always set px and py, regardless of progress state loaded or not
+                  link.source.px = new_fx;
+                  link.source.py = new_fy;
+                  link.target.px = link.target.x + d_fx;
+                  link.target.py = link.target.y + d_fy;
+                
+
+                nodes.forEach(function (protein) {
+                if ((protein.id == link.target.id) && curr_state) {
+
+                    protein.fx += d_fx;
+                    protein.fy += d_fy;
+                    protein.px += d_fx;
+                    protein.py += d_fy;
+                    protein.x += d_fx;
+                    protein.y += d_fy; 
+                  }
+                });
+              } else if (link.target.id == d.id) { 
+                  // always set px and py, regardless of whether progress state loaded or not                  
+                  link.source.px += d_fx;
+                  link.source.py += d_fy;
+                  link.target.px += d_fx;
+                  link.target.py += d_fy;
+
+
+                  link.source.fx = link.source.x + d_fx;
+                  link.source.fy = link.source.y + d_fy;
+                  
+                  link.source.x = link.source.x + d_fx;
+                  link.source.y = link.source.y + d_fy; 
+                  link.target.x = new_fx;
+                  link.target.y = new_fy;
+
+                  // always set px and py, regardless of progress state loaded or not
+                  link.source.px = link.source.x + d_fx;
+                  link.source.py = link.source.y + d_fy;
+                  link.target.px = new_fx;
+                  link.target.py = new_fy;
+
+
+                  nodes.forEach(function (protein) {
+                 
+
+                  if ((protein.id == link.source.id) && curr_state!=null) {
+                      protein.fx += d_fx;
+                      protein.fy += d_fy;
+                      protein.px += d_fx;
+                      protein.py += d_fy;
+                      protein.x += d_fx;
+                      protein.y += d_fy; 
+                    }
+                  });
+              }
+          });
+
+          // compute deltas between 
+          d.fx = new_fx; // setting fx , fy here seems to work, as opposed to px, py when drag
+          d.fy = new_fy;
+        }
+      });
+
+
+      // run simulation to move nodes
+      simulation.nodes(nodes);
+
+      tick();
+
+
+    }
+
+    function turn_off_template_bg() {
+      d3.select("#curr_template").remove();
+
+    }
+
+    function turn_off_template_side() {
+      d3.select("#curr_template_adjacent").remove();
+
+    }
+    
+
+    plot_template_results();
+
+    function plot_template_results() { 
+      let template_images = {{template_images | tojson}};
+      let templates = document.getElementsByClassName("templates");
+
+      for (var i=0; i < templates.length; i++) {
+        let template_img = templates[i];
+        let naturalW = template_img.naturalWidth;
+        let naturalH = template_img.naturalHeight;
+
+        template_img.style.height = (naturalH*0.1).toString() + 'px';
+        template_img.style.width = (naturalW*0.1).toString() + 'px';
+
+      }
+
+
+    }
+
+
+    function download_exemplars() {
+
+
+        // lay cover over until processing is finished so people don't click on things
+
+        let top_cover = svg.append('g');
+
+          top_cover.append("rect")
+          .attr('x', -w/2)
+          .attr('y', -h/2)
+          .attr('width', 1.2*w)
+          .attr('height', h)
+          .attr("fill-opacity", 0.7)
+          .attr('fill', '#faf0e6')
+          .attr("id", "download_cover");
+
+
+          top_cover.append("text")
+          .attr("x", -w/4)
+          .attr("y", -h/2 + margin.top)
+          .text("Loading")
+          .style("font-size", "96px")
+          .style('fill', 'darkGreen')
+          .attr("id", "download_cover_text1");
+
+          top_cover.append("text")
+          .attr("x", w/4)
+          .attr("y", -h/2 + margin.top)
+          .text("Loading")
+          .style("font-size", "96px")
+          .style('fill', 'darkGreen')
+          .attr("id", "download_cover_text2");
+
+
+          function download_blink() {
+            d3.select("#download_cover_text1").raise();
+            d3.select("#download_cover_text2").raise();
+
+            d3.select("#download_cover_text1").transition()
+              .duration(400)
+              .style("fill", "darkGreen")
+              .transition()
+              .duration(400)
+              .style("fill", "white")
+              .on("end", download_blink)
+
+            d3.select("#download_cover_text2").transition()
+              .duration(400)
+              .style("fill", "darkGreen")
+              .transition()
+              .duration(400)
+              .style("fill", "white")
+              .on("end", download_blink)
+          }
+
+          download_blink();
+        
+    }
+
+
+</script>

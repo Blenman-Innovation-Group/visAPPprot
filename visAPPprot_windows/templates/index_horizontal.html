@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<style>
+html {
+    height: 100%;
+}
+body {
+    min-height: 100%;
+}
+input[type=submit]
+{
+    font-size: 30px; 
+    font-weight: bold;
+    font-family: Arial; 
+    background-color: #FFFACD;
+}
+
+
+#Progress_Status {
+width: 100%;
+background-color: #ddd;
+position: relative;
+top: 20px;
+display: none;
+vertical-align:middle;
+}
+
+#myprogressBar {
+width: 2%;
+height: 20px;
+background-color: #4CAF50;
+display: none;
+vertical-align:middle;
+}
+
+/* https://stackoverflow.com/questions/6464592/how-to-align-entire-html-body-to-the-center */
+html, body {height:100%;}
+html {display:table; width:100%;}
+
+body {
+   display:table-cell; 
+   text-align:center; 
+   vertical-align:middle;
+}
+
+.content {
+   border: 5px;
+   border-style: solid;
+   border-color: #FFA500;
+   border-radius: 40px;
+   padding: 30px;
+   width: 50%;
+   margin-left: auto;
+   margin-right: auto;
+}
+
+p { 
+    margin: 10px
+}
+
+#nav
+{
+    width:100%;
+    text-align: center;
+}
+
+
+</style>
+
+<title>Omics Visualization</title>
+<body>
+
+
+<div class="content">
+<p style="color:black; font-size:30px; font-family:Arial; display:inline;">visAPPprot</p>
+<br>
+   
+<form id="home_form" action="/" method="post">
+
+    <label for="gpr_column">*If you need to compute an expression matrix select the column of values to use. Skip if you have prepared an expression matrix already.</label> <br>
+     <select name="gpr_header" id ="gpr_header">
+       {% for column in gpr_header %}
+           <option value="{{ column }}"> {{ column }}</option>
+       {% endfor %}
+      </select>
+
+   <br><br>
+
+   <button type="button" style="font-size: 25px; font-weight: bold; font-family: Arial; background-color: #FFFACD;" onclick="updateCursor(this.id);" id="GPR_button">Compute ExpMat</button>
+
+  <input type="submit" hidden id="GPR" value="GPR" name="option"/>
+
+
+   <p style="color:#FFA500; font-size:20px; font-family:Arial;"> Inputs required for all processes:</p>
+
+   <label for="dataset">*Dataset:</label>
+     <select name="rdata" id ="rdata">
+       {% for data in rdata %}
+           <option value="{{ data }}"> {{ data }}</option>
+       {% endfor %}
+      </select>
+
+   <br>
+
+   <label for="csv">*Expression matrix:</label>
+     <select name="csv" id="csv">
+       {% for data in csv %}
+           <option value="{{ data }}"> {{ data }}</option>
+       {% endfor %}
+      </select>
+
+   <br>
+
+   <label for="lfcshrink_type">*Analysis method type:</label>
+    <select name="lfcshrink_type" id="lfcshrink_type">
+       {% for key, value in lfcshrink_types.items() %}
+           <option value="{{ key }}"> {{ value }}</option>
+       {% endfor %}
+      </select>
+
+    <br>
+
+   <label for="level1">*Level 1: </label>
+     <input type="text" id="level1" value="{{level1}}" name="level1">
+     <br>
+
+     <label for="level2">*Level 2: </label>
+     <input type="text" id="level2" value="{{level2}}" name="level2">
+
+     <br><br>
+
+    
+  <p>
+
+    
+    <p>
+
+
+  <div id="nav">
+    <div style="display: inline-block;">
+        <button type="button" style="font-size: 25px; font-weight: bold; font-family: Arial; background-color: #FFFACD; display: inline-block;" onclick="updateCursor(this.id);" id="Volcano_button">Volcano Plot</button>
+
+        <input type="submit" hidden id="Volcano Plot" value="Volcano Plot" name="option"/> 
+    </div>
+
+    <div style="display: inline-block;">
+        <button type="button" style="font-size: 25px; font-weight: bold; font-family: Arial; background-color: #FFFACD; display: inline-block;" onclick="displayParameters(this.id);" id="Pathway_parameters">Pathway Map</button>
+    </div>     
+
+    <div style="display: inline-block;">
+        <button type="button" style="font-size: 25px; font-weight: bold; font-family: Arial; background-color: #FFFACD; display: inline-block;" onclick="displayParameters(this.id);" id="Heatmap_parameters">Heatmap</button>
+
+    </div>
+
+  </div>
+
+
+
+  <div id="pathway_parameters_div">
+
+  </div>
+
+   
+
+  <p>
+
+
+
+  <div id="heatmap_parameters_div">
+
+  </div>
+
+
+</form>
+
+
+<br><br>
+<div id="Progress_text" style="display:none; font-size:20px; font-family:Arial;"> Progress: </div>
+<div id="Progress_Status">
+<div id="myprogressBar"></div>
+
+
+</body>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script>
+    // progress bar
+
+    // only enable compute expmat button if microarray data folder exists
+    document.getElementById("GPR_button").disabled = true;
+    let gpr_header = {{gpr_header | tojson}};
+    if (gpr_header.length > 0)
+        document.getElementById("GPR_button").disabled = false;
+
+    function displayParameters(ID) {
+        console.log(ID);
+
+        if (ID == "Volcano_button") {
+            updateCursor(ID);
+        }
+        if (ID == "Pathway_parameters") {
+            let content = "<p style=\"color:#FFA500; font-size:20px; font-family:Arial;\"> Additional input required for pathway map:</p> <label for=\"pathways_data\">Pathway data:</label> <select name=\"pathways_data\" id=\"pathways_data\" multiple> {% for data in pathways_data %} <option value=\"{{ data }}\">{{ data }}</option> {% endfor %} </select>  <br><br> <button type=\"button\" style=\"font-size: 25px; font-weight: bold; font-family: Arial; background-color: #FFFACD;\" onclick=\"updateCursor(this.id);\" id=\"Pathway_button\">Submit</button> <input type=\"submit\" id=\"Pathway Map\" hidden value=\"Pathway Map\" name=\"option\"/> "
+
+
+            document.getElementById('heatmap_parameters_div').innerHTML = "";
+            document.getElementById('pathway_parameters_div').innerHTML += content;
+
+
+        }
+        if (ID == "Heatmap_parameters") {
+            let content = "<p style=\"color:#FFA500; font-size:20px; font-family:Arial;\"> Additional input required for heatmap:</p> <label for=\"raw_norm\">Use Raw or Normalized data?</label> <br> <input type=\"radio\" id=\"raw_norm\" name=\"raw_norm\" value=\"raw\" checked=\"checked\"> <label for=\"raw\">Raw</label><br> <input type=\"radio\" id=\"raw_norm\" name=\"raw_norm\" value=\"normalized\"> <label for=\"normalized\">Normalized</label><br> <br> <label for=\"clustering\">Choose clustering type:</label> <select name=\"clustering\" id=\"clustering\"> <option value=\"rows\">Rows only</option> <option value=\"columns\">Columns only</option> <option value=\"rows_columns\">Both Rows and Columns</option> </select> <br><br><button type=\"button\" style=\"font-size: 25px; font-weight: bold; font-family: Arial; background-color: #FFFACD;\" onclick=\"updateCursor(this.id);\" id=\"Heatmap_button\">Submit</button><input type=\"submit\" id=\"Heatmap\" hidden value=\"Heatmap\" name=\"option\"/>"
+
+            document.getElementById('pathway_parameters_div').innerHTML = "";
+            document.getElementById('heatmap_parameters_div').innerHTML += content;
+        }
+   }
+
+
+    function updateCursor(ID) {
+
+    // don't need to check levels if we're only computing expression matrix since we have no data yet to check
+    if ((ID == "GPR_button")) {
+
+        let gpr_proteins_set = 48400;
+        let gpr_patients_set = 89;
+
+        let gpr_proteins = {{gpr_proteins | tojson}};
+        let gpr_patients = {{gpr_patients | tojson}};
+
+        let ratio = (gpr_proteins * gpr_patients) / (gpr_proteins_set * gpr_patients_set);
+
+        ms = 80*10 * ratio;
+        document.getElementById("GPR").click();
+
+        // draw progress bar while R on backend is running
+        document.getElementById("Progress_text").style.display = "inline";
+        document.getElementById("Progress_Status").style.display = "block";
+        var element = document.getElementById("myprogressBar");
+        element.style.display = "block";
+
+        var width = 1;
+
+        var identity = setInterval(scene, ms);
+        function scene() {
+            if (width >= 100) {
+               clearInterval(identity);
+            } 
+            else {
+               width++;
+               element.style.width = width + '%';
+        }
+    }
+
+        return;
+
+    }
+
+
+    var exp_mat = document.getElementById("csv");
+    exp_mat = exp_mat.options[exp_mat.selectedIndex].text;
+
+    // check all fields are filled in before submitting
+    // https://stackoverflow.com/questions/15997632/check-textbox-before-submitting
+    function check_element(element)
+    {
+        var searchtext = document.getElementById(element).value;
+
+        if (searchtext.length == 0 & element == "level1")
+        {
+            alert('Missing "Level 1" field. "Level 1" is the first level you need to specify for differential expression.');
+            return false;
+        }
+
+        if (searchtext.length == 0 & element == "level2")
+        {
+            alert('Missing "Level 2" field. "Level 2" is the second level you need to specify for differential expression.');
+            return false;
+        }
+
+        return true;
+    }
+
+    let level1 = check_element("level1");
+    if (!level1)
+        return;
+
+    let level2 = check_element("level2");
+    if (!level2)
+        return;
+
+    // check if level1 and level2 are the same
+    if (String(document.getElementById('level1').value).toLowerCase() == String(document.getElementById('level2').value).toLowerCase()) {
+        alert('Level 1 and Level 2 cannot be the same phenotype.');
+        return;
+    }
+
+
+    var rowcol = {{rowcol | tojson}};
+
+    let shape = rowcol[exp_mat]
+    var proteins = shape[0];
+    var patients = shape[1];
+    var proteins_set = 15927;
+    var patients_set = 89;
+
+    var ratio = (proteins * patients) / (proteins_set * patients_set);
+
+
+    // draw progress bar while R on backend is running
+    document.getElementById("Progress_text").style.display = "inline";
+    document.getElementById("Progress_Status").style.display = "block";
+    var element = document.getElementById("myprogressBar");
+    element.style.display = "block";
+
+    var ele = document.getElementsByName('raw_norm');
+    var raw = false;
+
+    for (i = 0; i < ele.length; i++) {
+     if (ele[i].checked) {
+       if (ele[i].value.toLowerCase() == "raw")
+          raw = true;
+     }
+    }
+
+    var width = 1;
+    var ms = 0;
+    if (ID == "Volcano_button") {
+        ms = 1700*10 * ratio;
+        document.getElementById("Volcano Plot").click();
+    }
+    if (ID == "Pathway_button") {
+        ms = 1700*10 * ratio;
+        document.getElementById("Pathway Map").click();
+    }
+    if ((ID == "Heatmap_button") && (raw == true)) {
+        ms = 700*10 * ratio;
+        document.getElementById("Heatmap").click();
+    }
+    if ((ID == "Heatmap_button") && (raw == false)) {
+        ms = 900*10 * ratio;
+        document.getElementById("Heatmap").click();
+    }
+
+    var identity = setInterval(scene, ms);
+    function scene() {
+        if (width >= 100) {
+           clearInterval(identity);
+        } 
+        else {
+           width++;
+           element.style.width = width + '%';
+        }
+    }
+
+      
+   }
+
+</script>
+</html>

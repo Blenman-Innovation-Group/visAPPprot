@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+
+<style>
+
+.graph-svg-component {
+    background-color: black;
+}
+
+heatmapAxis line{
+  stroke: white;
+}
+
+.heatmapAxis path{
+  stroke: white;
+}
+
+.heatmapAxis text{
+  fill: white;
+}
+
+tick line{
+  stroke: white;
+}
+
+.tick line{
+  fill: white;
+}
+
+.tick path{
+  fill: white;
+}
+
+
+.scatter-container {
+    margin: auto;
+    width: 800px;
+    height: 600px;
+}
+
+
+.svg-plot, .canvas-plot {
+    position: absolute;
+}
+
+.button{
+    height:30px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+input[type="text"] {
+    height: 30px;
+    width: 150px;
+    font-size: 20px;
+    padding: 0;
+    border: 1px solid black;
+}
+
+#Progress_Status {
+width: 100%;
+background-color: #ddd;
+position: relative;
+top: 20px;
+display: none;
+}
+
+#myprogressBar {
+width: 2%;
+height: 20px;
+background-color: #4CAF50;
+display: none;
+}
+
+svg, img, canvas {
+  display: block;
+}
+
+.wrapper {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    z-index: 3;
+}
+
+
+#canvas0 {
+  position: relative;
+  z-index: -1;
+  background-color: transparent;
+}
+
+#canvas1 {
+  position: relative;
+  z-index: 0;
+  background-color: transparent;
+}
+#canvas2{
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+</style>
+
+
+
+<div style="display: flex">
+    <form id="home" action="/" method="get">
+      <button id = "home_button" class="button" type="submit" onclick="home();">Home</button>
+    </form>
+    <form id="download_figure" action="/render_heatmap_hm" method="get">
+      <button id = "download_button" class="button" type="submit" onclick="download_figure();">Download Figure</button>
+    </form>
+    <form id="wgcna_all_form" action="/wgcna_all" method="post">
+      <button id = "wgcna_all_button" class="button" type="submit" onclick="cluster_all_data();">WGCNA Cluster All Data</button>
+    </form>
+
+</div>
+
+
+
+
+
+<form id="wgcna_form" action="/wgcna" method="post">
+  <label for="Phenotype Prefixes" style="color:greenyellow; font-size:18px; font-family:Arial;">Phenotype Prefixes, separated by commas: (REQUIRED FOR WGCNA CLUSTERING ON SUBSET OF DATASET)</label>
+  <input type="text" id="Phenotype" name="Phenotype">
+  <input type="hidden" name="wgcna_proteins" id="wgcna_proteins" value="" />
+  <input type="hidden" name="wgcna_y" id="wgcna_y" value="" />
+  <input type="hidden" name="wgcna_patients" id="wgcna_patients" value="" />
+  <button type="submit" onclick="cluster_subset();" hidden></button>
+</form>
+
+
+<div id="my_dataviz"></div>
+
+
+<div id = "wrapper" class="wrapper">
+    <canvas id="canvas1" width="140" height="270"></canvas>
+    <canvas id="canvas2" width="100" height="200"></canvas>
+</div>
+
+
+
+
+<div id="Progress_text" style="display:none; font-size:20px; font-family:Arial; color:white;"> </div>
+<div id="Progress_Status">
+<div id="myprogressBar"></div>
+
+
+</div>
+
+
+
+
+
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+<script>
+
+  function home() {
+    document.getElementById("home_button").style.background="#ffd27f";
+    document.getElementById("home").submit();
+  }
+
+  function download_figure() {
+    document.getElementById("download_button").style.background="#ffd27f";
+
+      document.getElementById("my_dataviz").remove();
+      document.getElementById("wrapper").remove();
+
+      document.getElementById("Progress_text").style.display = "inline";
+      document.getElementById("Progress_text").innerHTML="Progress (download figure and then back to heatmap): ";
+
+       document.getElementById("Progress_Status").style.display = "block";
+       var element = document.getElementById("myprogressBar");
+       element.style.display = "block";
+
+
+       var width = 1;
+       var proteins_set = 15927;
+       var ratio = proteins.length / 15927;
+       var ms = 0;
+       if (raw == true)
+          ms = 500*10 * ratio;
+       if (raw == false)
+          ms = 700*10 * ratio;
+
+       var identity = setInterval(scene, ms);
+       function scene() {
+          if (width >= 100) {
+             clearInterval(identity);
+          } 
+          else {
+             width++;
+             element.style.width = width + '%';
+          }
+       }
+
+    window.scrollTo(0,0);
+
+    document.getElementById("download_figure").submit();
+  }
+
+  document.body.style.backgroundColor = 'black';
+    
+    // width and height of SVG
+    var w = {{w | tojson}},
+        h = {{h | tojson}};
+
+    var proteins = {{proteins | tojson}};
+    var patients = {{patients | tojson}};
+    var column_name = {{column_name | tojson}};
+
+    if (column_name.length > 0) {
+      column_name = column_name.split(" ")[0];
+    }
+
+    // find longest protein word
+    // find longest patient word
+    var longest_protein = "";
+    var longest_patient = "";
+    for (var i=0; i < proteins.length; i++) {
+      if (proteins[i].length > longest_protein.length)
+        longest_protein = proteins[i];
+    }
+
+    for (var i=0; i < patients.length; i++) {
+      if (patients[i].length > longest_patient.length)
+        longest_patient = patients[i];
+    }
+
+    // bottom margin dictated by length of longest patient name
+    let bottom_margin = longest_patient.length*10;
+
+    if (bottom_margin/window.innerHeight > 0.2)
+      // bottom_margin = longest_patient.length*(window.innerHeight/longest_patient.length);
+      bottom_margin = longest_patient.length*4;
+
+    var margin = {
+        top: 100,
+        right: 100,
+        bottom: bottom_margin,
+        left: longest_protein.length*8,
+      };
+
+    // make sure that SVG is at least as large as the window width, so that the legend can show up on the right border
+    w = Math.max(w, window.innerWidth - margin.left - margin.right);
+
+    var wrapper = document.querySelector("#wrapper");
+    wrapper.style.top = margin.top/5 + "px";
+
+
+
+    var canvas = document.querySelector("#wrapper").querySelector("#canvas1");
+    var ctx = canvas.getContext('2d');
+
+    ctx.canvas.height = window.innerHeight/4;
+    ctx.canvas.width  = window.innerHeight/8;
+
+    var canvas_h = window.innerHeight/4;
+    var canvas_w = window.innerHeight/8;
+    var canvas_w_margin = canvas_w / 10;
+    var canvas_h_margin = canvas_h / 10;
+
+    canvas.style.top = margin.top/5 + "px";
+
+    canvas.style.left = (window.innerWidth - 230) + "px";
+          
+    
+
+    // initialize SVG
+    var svg = d3.select("#my_dataviz").append("svg")
+      .attr("id",'heatmap')
+      .attr('width', margin.left + w + margin.right)
+      .attr('height', margin.top + h + margin.bottom)
+      .attr('padding',50)
+      .attr('transform', "translate(" + margin.left + "," + (margin.top)+ ")")
+
+
+    // add rect over canvas to show where you are on the page
+    var overview = document.querySelector("#wrapper").querySelector("#canvas2");
+
+    var overview_ctx = overview.getContext('2d');
+
+    overview.style.top = margin.top/5 + "px";
+
+    // scrollWidth is not the same as width of the body
+    var scrollWidth= $(document).width()-window.innerWidth;
+
+    overview.style.left = ((window.innerWidth - 235) + (0 / scrollWidth)*(100) + "px");
+
+
+    var context_h = 20;
+
+
+    var raw = {{raw | tojson}};
+
+
+
+    function cluster_all_data() {
+      document.getElementById("wgcna_all_button").style.background="#ffd27f";
+
+
+      document.getElementById("my_dataviz").remove();
+      document.getElementById("wrapper").remove();
+
+      document.getElementById("Progress_text").style.display = "inline";
+      document.getElementById("Progress_text").innerHTML="Progress (load WGCNA cluster results): ";
+       document.getElementById("Progress_Status").style.display = "block";
+       var element = document.getElementById("myprogressBar");
+       element.style.display = "block";
+
+
+       var width = 1;
+       var proteins_set = 15927;
+       var ratio = proteins.length / 15927;
+       var ms = 60*60*10 * ratio;
+
+       var identity = setInterval(scene, ms);
+       function scene() {
+          if (width >= 100) {
+             clearInterval(identity);
+          } 
+          else {
+             width++;
+             element.style.width = width + '%';
+          }
+       }
+
+
+      document.getElementById("wgcna_all_form").submit();
+    }
+
+
+    function cluster_subset(highlighted) {
+
+      document.getElementById("my_dataviz").remove();
+      document.getElementById("wrapper").remove();
+
+      document.getElementById("Progress_text").style.display = "inline";
+      document.getElementById("Progress_text").innerHTML="Progress (load WGCNA cluster results): ";
+
+       document.getElementById("Progress_Status").style.display = "block";
+       var element = document.getElementById("myprogressBar");
+       element.style.display = "block";
+
+
+       var width = 1;
+       var proteins_set = 15927;
+       var ratio = highlighted.length / 15927;
+       var ms = 22.2*60*10 * ratio;
+
+       var identity = setInterval(scene, ms);
+       function scene() {
+          if (width >= 100) {
+             clearInterval(identity);
+          } 
+          else {
+             width++;
+             element.style.width = width + '%';
+          }
+       }
+
+       window.scrollTo(0,0);
+    }
+
+    function onreload() {
+
+      document.getElementById("my_dataviz").remove();
+      document.getElementById("wrapper").remove();
+
+      document.getElementById("Progress_text").style.display = "inline";
+       document.getElementById("Progress_Status").style.display = "block";
+       var element = document.getElementById("myprogressBar");
+       element.style.display = "block";
+
+
+       var width = 1;
+       var proteins_set = 15927;
+       var ratio = proteins.length / 15927;
+       var ms = 0;
+       if (raw == true)
+          ms = 500*10 * ratio;
+       if (raw == false)
+          ms = 700*10 * ratio;
+
+       var identity = setInterval(scene, ms);
+       function scene() {
+          if (width >= 100) {
+             clearInterval(identity);
+          } 
+          else {
+             width++;
+             element.style.width = width + '%';
+          }
+       }
+
+       window.scrollTo(0,0);
+    }
+
+
+
+
+  var array_vst = {{array_vst | tojson}};
+
+
+  var cluster_rows = {{cluster_rows | tojson}};
+  var cluster_cols = {{cluster_cols | tojson}};
+
+
+
+    var raw_input = array_vst;
+    var raw_input_iter = [];
+    var all_snr = [];
+
+
+    var count_patients = 0;
+    // organize matrix into array of dictionaries for d3
+    for (var k =0; k < patients.length; k++) {
+        var patient = patients[k];
+
+        count_patients += 1;
+
+        var snr = raw_input[patient];
+        var dict = {};
+
+        for (var i=0; i < snr.length; i++) {
+          raw_input_iter.push({"Patient": patient, "Protein": proteins[i], "SNR": snr[i]})
+          all_snr.push(snr[i]);
+        }
+
+    }
+
+
+    
+
+    var protein_pos = {};
+    var render_rects = []; // [{x:, y:}, {x:, y:}]
+    var bound_top = 0; // distance from top of screen to start of svg. yes we should be able to compute it as margin.top + button height + input text height but for some reason it doesn't work like that
+
+    function prep_rects_for_render(data, patients, proteins, data_list, protein_pos, raw, cluster_rows, cluster_cols) {
+      var myGroups = patients;
+      var myVars = proteins;
+
+      // Build X scales and axis:
+      var x = d3.scaleBand()
+        .range([ 0, w - margin.left - margin.right ])
+        .domain(myGroups)
+        .padding(0.2);
+
+
+      // Build Y scales and axis:
+      var y = d3.scaleBand() 
+        .range([ h-1.5*margin.bottom, margin.top ]) 
+        .domain(myVars)
+        .padding(0.2);
+
+
+      var rotated = 0;
+
+
+      // add marker as reference for where draw lines later for wgcna 
+      svg.append("g")
+      .attr("transform", "translate(0,0)")
+      .attr("id", "marker_top")
+      .append("rect")
+      .attr("x", 0 )
+      .attr("y", 0 )
+      .attr("width", 0 )
+      .attr("height", 0 )
+      .attr("opacity", 0);
+
+      let svg_box = document.getElementById("marker_top");
+      bound_top  = svg_box.getBoundingClientRect().top;
+      
+      
+      // Build color scale
+      data_list.sort((a, b) => a - b);
+      var min_snr = data_list[0];
+      var max_snr = data_list[data_list.length-1];
+      var ninetyfive_perc_snr = data_list[Math.floor(data_list.length*0.99)]
+      var median_snr = data_list[Math.floor(data_list.length/2)];
+
+
+      var myColor = d3.scaleLinear()
+        .range(["red", "white", "white", "blue"])
+        .domain([max_snr, 1, -1, -1*max_snr])
+
+      // different color scale for raw values, vs. deseq analysis output
+      if (raw) {
+        var myColor = d3.scaleLinear()
+          .range(["red", "white", "blue"])
+          .domain([ninetyfive_perc_snr, ninetyfive_perc_snr/2, 0])
+
+      }
+
+
+      // black bg for heatmap, so white values can show up in SVG
+      svg.append("g")
+        .attr("transform", "translate(" + (margin.left) + "," + (margin.top) + ")")
+        .style("position", "fixed")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return 0; })
+        .attr("width", w - margin.left - margin.right )
+        .attr("height", h-1.5*margin.bottom - margin.top) 
+        .style("fill", function() { return "black"} )
+
+      // draw x- and y-axes and put black background underneath so we can see the axes labels even we scroll through the heatmap
+      svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + (window.innerHeight - 3*margin.bottom) + ")") 
+        .style("position", "fixed")
+        .attr("id", "yaxisbg")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return 0 })
+        .attr("width", w - margin.left - margin.right )
+        .attr("height", 1.5*margin.bottom)
+        .style("fill", function() { return "black"} )
+
+
+      svg.append("g")
+        .attr("transform", "translate(" + (60) + "," + (margin.top) + ")")
+        .style("position", "fixed")
+        .attr("id", "xaxisbg")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return 0 })
+        .attr("width", margin.left - 60 )
+        .attr("height", h-1.5*margin.bottom - margin.top) 
+        .style("fill", function() { return "black"} )
+
+      var xaxis = svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + (window.innerHeight - 3*margin.bottom) + ")") 
+        .call(d3.axisBottom(x))
+        .style("position", "fixed")
+        .attr("id", "yaxis")
+        .attr("class", "heatmapAxis") 
+        .selectAll("text")  
+        .style("font-size",12)
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", "-.5em")
+        .attr("transform", "rotate(-90)")
+
+      var yaxis = svg.append("g")
+      .attr("transform", "translate(" + (margin.left) + ", 0)")
+        .call(d3.axisLeft(y))
+        .style("position", "fixed")
+        .attr("id", "xaxis")
+        .attr("class", "heatmapAxis")
+        .selectAll("text")  
+        .style("font-size",12);
+
+
+      var color_legend = d3.scaleLinear()
+      .range(["blue", "white", "white", "red"])
+      .domain([0, 50-(1/max_snr)*100, 50+(1/max_snr)*100, 100])
+
+      if (raw) {
+        color_legend = d3.scaleLinear()
+        .range(["blue", "white", "red"])
+        .domain([0, 50, 100])
+      }
+
+      var legend_data = [...Array(100).keys()];
+
+      legend_data.reverse();
+
+      let legend_bg_h = Math.max(2*100+75, window.innerHeight/3);
+      let legend_bg_y = window.innerHeight/2 - 50 - margin.top*2.5;
+      let legend_data_y = window.innerHeight/2 - margin.top*2.5;
+      let legend_title_y = window.innerHeight/2 - 25 - margin.top*2.5;
+
+      svg.append("g")
+        .attr("transform", "translate(" + (window.innerWidth - 425) + ",0)")
+        .style("position", "fixed")
+        .attr("id", "legendbg")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return legend_bg_y })
+        .attr("width", 180 )
+        .attr("height", legend_bg_h)
+        .style("fill", function() { return "black"} )
+
+      svg.append("g")
+        .attr("transform", "translate(" + (window.innerWidth - 375) + ",0)")
+        .attr("id", "legend")
+        .selectAll()
+          .data(legend_data)
+          .enter()
+          .append("rect")
+            .attr("x", function(d) { return (0) })
+            .attr("y", function(d, i) { return legend_data_y + i*2 })
+            .attr("width", 45 )
+            .attr("height", 2 )
+            .style("fill", function(d) { return color_legend(d)} )
+
+
+      svg.append("g")
+        .attr("transform", "translate(" + (window.innerWidth - 405) + "," + (0) + ")")
+        .attr("id", "legend_title")
+        .append("text")
+          .attr("x", function() {
+            if (raw)
+              return column_name.length+2*20;
+            return column_name.length;
+          })
+          .attr("y", legend_title_y)
+          .text(function() {
+            if (raw)
+              return column_name;
+            return "VST " + column_name;
+          })
+          .style("fill", function(d) { return "red"} )
+          .style("font-size", 20)
+
+
+        var legend_text = [0, 
+        0.25 * (2*max_snr),
+        0.5 * (2*max_snr),
+        0.75 * (2*max_snr),
+        (2*max_snr)];
+
+        if (raw) {
+          legend_text = [0, 
+          0.2 * (ninetyfive_perc_snr),
+          0.4 * (ninetyfive_perc_snr),
+          0.6 * (ninetyfive_perc_snr),
+          0.8 * (ninetyfive_perc_snr),
+          (ninetyfive_perc_snr)];
+        }
+
+      legend_text.reverse()
+
+
+      svg.append("g")
+        .attr("transform", "translate(" + (window.innerWidth - 325) + ",0)")
+        .attr("id", "legend_text")
+        .selectAll()
+          .data(legend_text)
+          .enter()
+          .append("text")
+            .attr("x", function(d) { return 0 })
+            .attr("y", function(d, i) { return legend_data_y + i*2*(100/(legend_text.length-1)) })
+            .text(function(d) { 
+              if (raw) 
+                return (d).toFixed(3);
+              else 
+                return (d+(-1)*max_snr).toFixed(3);})
+            .style("fill", function(d) { return "grey"} )
+
+
+
+
+      // move the axes and color legend so that it follows when we scroll down the window
+        function myFunction() {
+          
+            if (window.pageYOffset > 0) {
+              d3.select("#yaxis").nodes()[0].setAttribute("transform", "translate(" + margin.left + "," + (window.pageYOffset + window.innerHeight - 3*margin.bottom)  + ")") 
+
+              d3.select("#yaxisbg").nodes()[0].setAttribute("transform", "translate(" + margin.left + "," + (window.pageYOffset + window.innerHeight - 3*margin.bottom)  + ")") 
+
+              d3.select("#yaxisbg").raise()
+
+              d3.select("#legend").nodes()[0].setAttribute("transform", "translate(" + (w + 50) + "," + (window.pageYOffset)  + ")")
+
+              d3.select("#legend_text").nodes()[0].setAttribute("transform", "translate(" + (w + 100) + "," + (window.pageYOffset)  + ")")
+
+              d3.select("#legend_title").nodes()[0].setAttribute("transform", "translate(" + (w + 20) + "," + (224 + window.pageYOffset)  + ")")
+
+              canvas.style.top = (window.pageYOffset) + "px";
+
+              // locator moves down overview fraction = pageoffset / h
+              overview.style.top = (window.pageYOffset + (window.pageYOffset / h)*(canvas_h-context_h)) + "px";
+
+              // move axes up so newly rendered section of heatmap doesn't cover it
+              d3.select("#yaxisbg").raise()
+              d3.select("#yaxis").raise();
+
+            }
+            if (window.pageXOffset > 0) {
+              d3.select("#xaxis").nodes()[0].setAttribute("transform", "translate(" + (margin.left + window.pageXOffset) + ", 0)")
+
+              d3.select("#xaxisbg").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + 60) + "," + (margin.top) + ")")
+
+              canvas.style.left = (window.pageXOffset) + "px";
+
+              // locator moves down overview fraction = pageoffset / h
+              overview.style.left = (window.pageXOffset) + "px";
+
+              // move axes up so newly rendered section of heatmap doesn't cover it
+              d3.select("#xaxisbg").raise()
+              d3.select("#xaxis").raise();
+            }
+      }
+
+      if (cluster_cols) {
+        // brackets to column cluster
+        svg.append("g")
+          .attr("transform", "translate(" + (margin.left) + "," + (10) + ")")
+          .append("line")
+          .style("stroke", "green")
+          .style("stroke-width", 5)
+          .attr("x1", 0)
+          .attr("y1", 0)
+          .attr("x2", w - margin.left - margin.right)
+          .attr("y2", 0); 
+
+        svg.append("g")
+          .attr("transform", "translate(" + (margin.left) + "," + (10) + ")")
+          .append("line")
+          .style("stroke", "green")
+          .style("stroke-width", 5)
+          .attr("x1", 0)
+          .attr("y1", 0)
+          .attr("x2", 0)
+          .attr("y2", 20); 
+
+        svg.append("g")
+          .attr("transform", "translate(" + (margin.left) + "," + (10) + ")")
+          .append("line")
+          .style("stroke", "green")
+          .style("stroke-width", 5)
+          .attr("x1", w - margin.left - margin.right)
+          .attr("y1", 0)
+          .attr("x2", w - margin.left - margin.right)
+          .attr("y2", 20); 
+        }
+
+
+      if (cluster_rows) {
+        // brackets to show row cluster
+        svg.append("g")
+          .attr("transform", "translate(" + (0) + "," + (margin.top) + ")")
+          .append("line")
+          .style("stroke", "green")
+          .style("stroke-width", 5)
+          .attr("x1", 0)
+          .attr("y1", 0)
+          .attr("x2", 0)
+          .attr("y2", h-3*margin.bottom - margin.top); 
+
+        svg.append("g")
+          .attr("transform", "translate(" + (0) + "," + (margin.top) + ")")
+          .append("line")
+          .style("stroke", "green")
+          .style("stroke-width", 5)
+          .attr("x1", 0)
+          .attr("y1", h-3*margin.bottom - margin.top)
+          .attr("x2", 20)
+          .attr("y2", h-3*margin.bottom - margin.top); 
+
+        svg.append("g")
+          .attr("transform", "translate(" + (0) + "," + (margin.top) + ")")
+          .append("line")
+          .style("stroke", "green")
+          .style("stroke-width", 5)
+          .attr("x1", 0)
+          .attr("y1", 0)
+          .attr("x2", 20)
+          .attr("y2", 0);
+        }
+
+        // compute positions of all the rects
+        for (let i=0; i < data.length; i++) {
+          // save positions of proteins so we know where the user's cursor is selecting later
+          // remember that svg is shifted down by margin.top so y value is shifted
+          // save pos as half of rect position since middle is easier to target
+          // 30 is height of button
+          // 10 is margin padding below button
+          // 32 is height of text input: 30 height + 2*1px border
+          protein_pos[data[i].Protein] = [x(data[i].Patient), y(data[i].Protein) + margin.top + 30+10 + 32 + y.bandwidth()/2];
+
+          render_rects.push({"Patient": x(data[i].Patient), "Protein": y(data[i].Protein), "SNR": myColor(data[i].SNR), "width": x.bandwidth(), "height": y.bandwidth()});
+        }
+
+    }
+
+    prep_rects_for_render(raw_input_iter, patients, proteins, all_snr, protein_pos, raw, cluster_rows, cluster_cols);
+
+
+
+    heatmap_2d_realtime(raw_input_iter, patients, proteins, all_snr, protein_pos, raw, cluster_rows, cluster_cols);
+
+    
+    function heatmap_2d_realtime(data, patients, proteins, data_list, protein_pos, raw, cluster_rows, cluster_cols) {
+
+      // Labels of row and columns
+      var myGroups = patients;
+      var myVars = proteins;
+
+      // Build X scales and axis:
+      var x = d3.scaleBand()
+        .range([ 0, w - margin.left - margin.right ])
+        .domain(myGroups)
+        .padding(0.2);
+
+
+      // Build Y scales and axis:
+      var y = d3.scaleBand()
+        .range([ h-1.5*margin.bottom, margin.top ]) // 3
+        .domain(myVars)
+        .padding(0.2);
+
+
+      var rotated = 0;
+      
+      // Build color scale
+      data_list.sort((a, b) => a - b);
+      var min_snr = data_list[0];
+      var max_snr = data_list[data_list.length-1];
+      var ninetyfive_perc_snr = data_list[Math.floor(data_list.length*0.99)]
+      var median_snr = data_list[Math.floor(data_list.length/2)];
+
+      var myColor = d3.scaleLinear()
+        .range(["red", "white", "white", "blue"])
+        .domain([max_snr, 1, -1, -1*max_snr])
+
+      // different color scale for raw values, vs. deseq analysis output
+      if (raw) {
+        var myColor = d3.scaleLinear()
+          .range(["red", "white", "blue"])
+          .domain([ninetyfive_perc_snr, ninetyfive_perc_snr/2, 0])
+
+      }
+
+      let top_bound = window.pageYOffset;
+      let window_height = window.innerHeight;
+      let bottom_bound = top_bound + window_height;
+
+      top_bound -= window_height /2;
+      bottom_bound += window_height / 2;
+
+      let render_rects_filter = render_rects.filter(function(d)
+       {
+            return ((d.Protein + margin.top + 30+10 + 32) > top_bound) & ((d.Protein + margin.top + 30+10 + 32) < bottom_bound);
+       });
+
+
+      svg.append("g")
+      .attr("transform", "translate(" + margin.left + ",0)")
+      .attr("id", "curr_heatmap")
+      .selectAll()
+      .data(render_rects_filter)
+      .enter()
+      .append("rect")
+      .attr("x", function(d) { return d.Patient; })
+      .attr("y", function(d) { return d.Protein; })
+      .attr("width", function(d) { return d.width; })
+      .attr("height", function(d) { return d.height; })
+      .style("fill", function(d) { return d.SNR;} );
+
+
+      // draw axes on top after rectangles covered them
+      d3.select("#yaxisbg").raise()
+      d3.select("#yaxis").raise();
+
+      d3.select("#legendbg").raise()
+      d3.select("#legend").raise();
+      d3.select("#legend_text").raise()
+      d3.select("#legend_title").raise();
+    
+
+
+      window.onscroll = function() {myFunction()};
+
+      function myFunction() {
+        top_bound = window.pageYOffset;
+        window_height = window.innerHeight;
+        bottom_bound = top_bound + window_height;
+
+        top_bound -= window_height /2;
+        bottom_bound += window_height / 2;
+
+        // clear current heatmap 
+        d3.select("#curr_heatmap").remove();
+
+        render_rects_filter = render_rects.filter(function(d)
+         {
+              return ((d.Protein + margin.top + 30+10 + 32) > top_bound) & ((d.Protein + margin.top + 30+10 + 32) < bottom_bound);
+         });
+
+
+        svg.append("g")
+        .attr("transform", "translate(" + margin.left + ",0)")
+        .attr("id", "curr_heatmap")
+        .selectAll()
+        .data(render_rects_filter)
+        .enter()
+        .append("rect")
+        .attr("x", function(d) { return d.Patient; })
+        .attr("y", function(d) { return d.Protein; })
+        .attr("width", function(d) { return d.width; })
+        .attr("height", function(d) { return d.height; })
+        .style("fill", function(d) { return d.SNR;} );
+
+
+        // move axes with window shift
+
+        if (window.pageYOffset >= 0) {
+          d3.select("#yaxis").nodes()[0].setAttribute("transform", "translate(" + margin.left + "," + (window.pageYOffset + window.innerHeight - 3*margin.bottom)  + ")") // 6
+
+          d3.select("#yaxisbg").nodes()[0].setAttribute("transform", "translate(" + margin.left + "," + (window.pageYOffset + window.innerHeight - 3*margin.bottom)  + ")") // 6
+
+          d3.select("#yaxisbg").raise()
+
+          d3.select("#legendbg").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 525) + "," + (window.pageYOffset)  + ")")
+
+          d3.select("#legend").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 475) + "," + (window.pageYOffset)  + ")")
+
+          d3.select("#legend_text").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 425) + "," + (window.pageYOffset)  + ")")
+
+          d3.select("#legend_title").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 505) + "," + (window.pageYOffset)  + ")")
+
+          canvas.style.top = (window.pageYOffset) + "px";
+
+          // locator moves down overview fraction = pageoffset / h
+          overview.style.top = (window.pageYOffset + (window.pageYOffset / h)*(canvas_h+((canvas_w - canvas_w_margin*2)/20)-40-canvas_h_margin-context_h)) + "px";
+
+          // move axes up so newly rendered section of heatmap doesn't cover it
+          d3.select("#yaxisbg").raise()
+          d3.select("#yaxis").raise();
+
+        }
+        if (window.pageXOffset >= 0) {
+          d3.select("#xaxis").nodes()[0].setAttribute("transform", "translate(" + (margin.left + window.pageXOffset) + ", 0)");
+
+          d3.select("#xaxisbg").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + 60) + "," + (margin.top) + ")");
+
+          d3.select("#xaxisbg").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + 60) + "," + (margin.top) + ")");
+
+          canvas.style.left = (window.pageXOffset + window.innerWidth - 230) + "px";
+          
+          // scrollWidth is not the same as width of the body
+          var scrollWidth= $(document).width()-window.innerWidth;
+
+          overview.style.left = ((window.pageXOffset + window.innerWidth - 235) + (window.pageXOffset / scrollWidth)*(canvas_w-2*canvas_w_margin) + "px");
+
+          d3.select("#legendbg").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 425) + "," + (window.pageYOffset)  + ")")
+
+          d3.select("#legend").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 375) + "," + (window.pageYOffset)  + ")")
+
+          d3.select("#legend_text").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 325) + "," + (window.pageYOffset)  + ")")
+
+          d3.select("#legend_title").nodes()[0].setAttribute("transform", "translate(" + (window.pageXOffset + window.innerWidth - 405) + "," + (window.pageYOffset)  + ")")
+
+          // move axes up so newly rendered section of heatmap doesn't cover it
+          d3.select("#xaxisbg").raise()
+          d3.select("#xaxis").raise();
+
+          d3.select("#legendbg").raise()
+          d3.select("#legend").raise();
+          d3.select("#legend_text").raise()
+          d3.select("#legend_title").raise();
+
+        }
+      }
+      
+
+    }
+
+
+    // highlight sections of heatmap and show wgcna for that section
+
+    var keydown = false;
+    var coords = [];
+
+    function select_map() {
+      console.log(window.getSelection().toString());
+      console.log(document.selection.createRange().text);
+    } 
+
+
+    // log cursor clicks to find which proteins are within the cursor range
+    function mousemove(event) {
+      if (keydown) {
+        x = event.pageX;
+        y = event.pageY;
+        coords.push([x,y]);
+      }
+    }
+
+
+    function mousedown(event) {
+      keydown = true;
+      document.addEventListener("mousemove", mousemove);
+    }
+
+    function mouseup(event) {
+      
+
+      keydown = false;
+      document.body.style.cursor = 'default';
+
+
+      console.log(coords);
+
+      // draw rectangle for area that's highlighted
+      var max_x = -1;
+      var min_x = Infinity;
+      var max_y = -1;
+      var min_y = Infinity;
+
+      for (i =0; i < coords.length; i++) {
+        x = coords[i][0];
+        y = coords[i][1];
+
+        if (x > max_x)
+          max_x = x;
+        if (y > max_y)
+          max_y = y;
+        if (x < min_x)
+          min_x = x;
+        if (y < min_y)
+          min_y = y;
+      }
+
+      svg.append("rect")
+        .attr("id", "recthighlight")
+        .attr("x", min_x - 100 - 13)
+        .attr("y", min_y - 50 - 1)
+        .attr("width", (max_x-min_x))
+        .attr("height", (max_y-min_y))
+        .attr("fill", "white")
+        .attr("opacity", 0.3);
+
+    }
+
+    // draw lines indicating boundaries of wherever user is selecting
+    function onclick(event) {
+     
+      if (keydown) {
+        x = event.pageX;
+        y = event.pageY;
+        coords.push([x,y]);
+
+      // draw lines up since svg is shifted down by margin.top but cursor position is not
+      // svg starts drawing after buttons automatically, so we don't need to take into account height of buttons when placing these lines
+        
+        let y_transform = y - bound_top;
+
+       svg.append('line')
+          .style("stroke", "hotpink")
+          .style("stroke-width", 3)
+          .attr("x1", 0)
+          .attr("y1", y_transform)
+          .attr("x2", x)
+          .attr("y2", y_transform); 
+
+
+      }
+    }
+
+    // this is where we find the proteins that the user selected
+    function change_cursor(event) {
+      console.log("keydown");
+      if (!keydown && event.altKey) {
+        coords = [];
+        document.body.style.cursor = 'crosshair';
+        document.addEventListener("click", onclick);
+       
+        keydown = true;
+      }
+      else if (keydown) {
+        // highlight all the proteins chosen
+        var max_x = -1;
+        var min_x = Infinity;
+        var max_y = -1;
+        var min_y = Infinity;
+
+        // compute the bounding box for the selection
+        for (i =0; i < coords.length; i++) {
+
+          x = coords[i][0];
+          y = coords[i][1];
+
+          if (x > max_x)
+            max_x = x;
+          if (y > max_y)
+            max_y = y;
+          if (x < min_x)
+            min_x = x;
+          if (y < min_y)
+            min_y = y;
+        }
+
+        var highlighted = [];
+
+        // find all proteins that are located within the bounding box
+        for (let prot in protein_pos) {
+          y_coord = protein_pos[prot][1];
+
+          if (y_coord >= min_y && y_coord <= max_y) {
+            console.log(y_coord, prot);
+            highlighted.push(prot);
+          }
+        }
+
+
+        // submit form and go to WGCNA page
+        // check if phenotypes are entered       
+        function check_element(element)
+        {
+            var searchtext = document.getElementById(element).value;
+
+            if (searchtext.length == 0 & element == "Phenotype")
+            {
+                alert('Enter at least 2 phenotypes into text field at the top of the page, separated by commas. (eg: "AC, C")\n\nPage will reload, please try again.');
+                onreload();
+                location.reload();
+            }
+
+            if (highlighted.length == 0 & element == "wgcna_proteins")
+            {
+                alert('Enter select mode by pressing ALT key once. Click top of one protein to see green line indicating upper bound, click bottom of a second protein to see green line indicating lower bound. Press ALT key again to submit.\n\nPage will reload, please try again.');
+                onreload();
+                location.reload();
+            }
+        }
+
+        document.getElementById("wgcna_proteins").value = highlighted;
+        // get patients by prefix
+        var prefix_input = document.getElementById('Phenotype').value;
+        var prefix = prefix_input.split(",");
+        var y_vals = [];
+        for (var i=0; i < prefix.length; i++) {
+          y_vals.push(i);
+        }
+        var wgcna_patients = [];
+        var wgcna_y = [];
+
+        for (var j=0; j < prefix.length; j++) {
+          var pre = prefix[j].trim();
+          var y_val = y_vals[j];
+
+          for (var i=0; i < patients.length; i++) {
+            var pheno_list = patients[i].match(/[a-zA-Z]+|[0-9]+/g);
+
+            for (var k=0; k < pheno_list.length; k++) {
+              if (pheno_list[k] == pre) {
+                wgcna_patients.push(patients[i]);
+                wgcna_y.push(y_val);
+                break;
+              }
+            }
+          }
+        }
+
+        document.getElementById("wgcna_y").value = wgcna_y;
+        document.getElementById("wgcna_patients").value = wgcna_patients;
+        cluster_subset(highlighted);
+        document.getElementById("wgcna_form").submit();
+
+
+        // change status back to normal
+        keydown = false;
+      }
+    }
+    
+    document.onkeydown = change_cursor;
+
+    
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas_w, canvas_h);
+    ctx.fillStyle = "darkgrey";
+    ctx.fillRect(canvas_w_margin, 40, canvas_w - canvas_w_margin*2, canvas_h - 40 - canvas_h_margin);
+    cellWidth = (canvas_w - canvas_w_margin*2)/5;
+    ctx.lineWidth = cellWidth/2; 
+
+    for (var x = 0; x <= (canvas_w - canvas_w_margin*2); x += cellWidth) {
+        ctx.beginPath();
+        ctx.moveTo(x+canvas_w_margin, 40);
+        ctx.lineTo(x+canvas_w_margin, canvas_h - canvas_h_margin);
+        ctx.strokeStyle = "dimgrey";  
+        ctx.stroke();
+    }
+
+    for (var y = 0; y <= (canvas_h - canvas_h_margin-40); y += cellWidth) {
+        ctx.beginPath();
+        ctx.moveTo(canvas_w_margin, y+40);
+        ctx.lineTo(canvas_w - canvas_w_margin, y+40);
+        ctx.strokeStyle = "dimgrey";  
+        ctx.stroke();
+    }
+
+    let fontsize = Math.round(canvas_w / 7);
+    ctx.font = fontsize.toString() + "px Arial";
+    ctx.fillStyle = "red";
+    ctx.fillText("You Are Here", canvas_w_margin, 20);
+
+
+    overview_ctx.fillStyle = "rgba(255,255,255, 0.8)";
+    overview_ctx.fillRect(canvas_w_margin, 40-cellWidth/4, 10, context_h);
+
+
+
+
+
+
+</script>

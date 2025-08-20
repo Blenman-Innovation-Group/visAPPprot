@@ -1,0 +1,217 @@
+﻿Cell Type,Organ,Organelle,Processes
+absorptive cell,adrenal gland,acrosome,activation of g(i) alpha proteins
+acinar cell,anus,autophagosome,adaptor protein
+adipocyte,appendix,cell membrane,adipogenesis
+adventitial cell,arteries,centriole,androgen receptor coregulator
+alveolar cell,blood,centrosome,angiogenesis
+amacrine cell,blood vessels,cilium,apoptosis
+antigen presenting cell,bone marrow,cytoskeleton,ATP-dependent ligation
+astrocyte,bones,cytosol,auxiliary protein
+atrioventricular bundle cell,brain,endoplasmic reticulum,bace1 phosphorylation
+B cell,breast,flagellum,bace1 transporter
+basal cell,bronchi,golgi apparatus,bile acid synthesis
+basket cell,capillaries,lysosome,binder protein 
+basophil,cartilage,melanosome,biosynthesis
+bipolar cell,cervix,mitochondrion,centromere formation
+bladder cell,epididymis,myofibril,ciliogenesis
+blood cell,esophagus,nucleolus,clathrin-mediated endocytosis
+bone marrow cell,eye,nucleus,corepressor
+brain vascular cell,fallopian tube,peroxisome,dimethylation
+bronchial cell,gall bladder,porosome,endocytosis
+brown fat cell,hair,proteasome,endosomal sorting 
+brush cell,heart,ribosome,gtpase activating protein (gap)  
+cajal-retzius cell,intestine,rough endoplasmic reticulum,helicase 
+cardiac cell,joints,smooth endoplasmic reticulum,heme synthesis
+cardiomyocyte,kidneys,stress granule,homeostasis
+centroblast,large intestine,TIGER domain,inflammation
+centrocyte,larynx,vacuole,intracellular signal transduction
+cerebellar cell,ligaments,vesicle,intracellular vesicle-mediated transport
+cholangiocyte,liver,,kinesin
+chondrocyte,lungs,,kinetochore assembly
+chromaffin cell,lymph nodes,,male fertility
+ciliary muscle cell,lymphatic vessels,,meiotic recombination factor
+ciliated cell,mammary glands,,membrane binding
+club cell,mouth,,metabolism
+collecting duct cell,nails,,metal ion binding
+colon cell,nasal passage,,metal transporter
+cone cell,nerves,,mitochondrial sheath formation
+connective tissue cell,nose,,morphogenesis
+contractile cell,ovaries,,neuroinflammation
+cortex artery cell,pancreas,,neutrophilic inflammation
+cortex tubule cell,parathyroid gland,,nuclear receptor coactivator
+cortical cell,peripheral nerves,,nucleo-cytoplasmic transport
+decidual cell,pharynx,,organelle transporter
+dendritic cell,pineal gland,,polyadenylation
+ectodermal cell,pituitary gland,,polymerase
+endocardial cell,placenta,,pre-mrna splicing
+endocrine cell,prostate gland,,proteasomal degradation
+endoderm cell,rectum,,protein synthesis
+endosteal cell,seminal vesicles,,putative polycomb group (pcg) protein
+endothelial cell,skeletal muscles,,rab11 effector protein
+enterocyte,skin,,rna binder
+enteroendocrine cell,small intestine,,signal transduction
+eosinophil,spinal cord,,spermatogenesis
+ependymal cell,spleen,,spermiogenesis
+epidermal cell,stomach,,sulfotransferase 
+epithelial cell,tendons,,transcription
+erythroblast,testes,,transcription activator
+erythrocyte,thymus,,transcription regulation
+eurydendroid cell,thyroid gland,,transcriptional repressor
+fat cell,tongue,,translation repressor
+fenestrated cell,trachea,,tubulating activity
+fibroblast ,ureters,,ubiquitination
+fibrocyte,urethra,,vault structure protein
+follicular cell,urinary bladder,,
+foveolar cell,uterus,,
+ganglion cell,vagina,,
+germ cell,vasa deferentia,,
+giant cell,veins,,
+glandular cell,,,
+glial cell,,,
+glioblast,,,
+goblet cell,,,
+granular cell,,,
+granule cell,,,
+granulocyte,,,
+granulocytopoietic cell,,,
+granulosa cell,,,
+hemangioblast,,,
+hematopoietic cell,,,
+hepatoblast,,,
+hepatocyte,,,
+hillock cell,,,
+hofbauer cell,,,
+horizontal cell,,,
+hypendymal cell,,,
+innate lymphoid cell,,,
+intercalated cell,,,
+interneuron,,,
+interstitial cell,,,
+intraepithelial lymphocyte,,,
+ionocyte,,,
+keratinocyte,,,
+keratocyte,,,
+kupffer cell,,,
+langerhans cell,,,
+lens cell,,,
+lens fiber cell,,,
+leptomeningeal cell,,,
+leukocyte,,,
+Leydig cell,,,
+luminal cell,,,
+lymphangioblast,,,
+lymphocyte,,,
+M cell,,,
+macroglial cell,,,
+macrophage,,,
+malignant cell,,,
+mast cell,,,
+megakaryocyte,,,
+melanocyte,,,
+merkel cell,,,
+mesangial cell,,,
+mesenchymal cell,,,
+mesodermal cell,,,
+mesothelial cell,,,
+microglial cell,,,
+midget ganglion cell,,,
+monocyte,,,
+mononuclear cell,,,
+mononuclear phagocyte,,,
+motor neuron,,,
+mucous neck cell,,,
+mueller cell,,,
+mural cell,,,
+muscle cell,,,
+myelocyte,,,
+myeloid cell,,,
+myeloid leukocyte,,,
+myoblast,,,
+myocyte,,,
+myoepithelial cell,,,
+myofibroblast cell,,,
+myometrial cell,,,
+natural killer cell,,,
+neoplastic cell,,,
+neural cell,,,
+neural crest cell,,,
+neurectodermal cell,,,
+neuroblast,,,
+neuroendocrine cell,,,
+neuron,,,
+neuronal receptor cell,,,
+neuroplacodal cell,,,
+neutrophil,,,
+NK T cell,,,
+noradrenergic cell,,,
+normal cell,,,
+notochordal cell,,,
+OFF cell,,,
+oligodendrocyte,,,
+oocyte,,,
+oogonial cell,,,
+osteoblast,,,
+osteoclast,,,
+pacemaker cell,,,
+pancreatic cell,,,
+pancreatic polypeptide cells,,,
+paneth cell,,,
+parasol ganglion cell,,,
+paraxial cell,,,
+parietal cell,,,
+peptic cell,,,
+pericyte,,,
+photoreceptor cell,,,
+pituitary gland cell,,,
+plasma cell,,,
+plasmablast,,,
+plasmatocyte,,,
+platelet,,,
+pneumocyte,,,
+podocyte,,,
+precursor cell,,,
+preosteoblast,,,
+prickle cell,,,
+principal cell,,,
+proerythroblast,,,
+progenitor cell,,,
+promonocyte,,,
+promyelocyte,,,
+pulmonary ionocyte,,,
+purkinje cell,,,
+renal cell,,,
+reticular cell,,,
+reticulocyte,,,
+rod cell,,,
+S cone cell,,,
+salivary gland cell,,,
+schwann cell,,,
+sebaceous gland cell,,,
+secreting cell,,,
+secretory cell,,,
+sensory neuron,,,
+serous cell,,,
+sertoli cell,,,
+smooth muscle cell,,,
+somatic cell,,,
+sperm,,,
+stalk cell,,,
+stellate cell,,,
+stem cell,,,
+stromal cell,,,
+supporting cell,,,
+T cell,,,
+tanycyte,,,
+taste receptor cell,,,
+tendon cell,,,
+theca cell,,,
+thymocyte,,,
+tip cell,,,
+transit amplifying cell,,,
+trophoblast,,,
+trophoblast cell,,,
+tuft cell,,,
+urothelial cell,,,
+valve cell,,,
+vasa recta cell,,,
+white fat cell,,,

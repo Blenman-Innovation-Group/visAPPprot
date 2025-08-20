@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+
+<style>
+
+.graph-svg-component {
+    background-color: black;
+}
+
+heatmapAxis line{
+  stroke: lightgrey;
+}
+
+.heatmapAxis path{
+  stroke: lightgrey;
+}
+
+.heatmapAxis text{
+  fill: lightgrey;
+}
+
+tick line{
+  stroke: white;
+}
+
+.tick line{
+  fill: white;
+}
+
+.tick path{
+  fill: white;
+}
+
+adjAxis line{
+  stroke: white;
+}
+
+.adjAxis path{
+  stroke: white;
+}
+
+.adjAxis text{
+  fill: white;
+}
+
+
+.scatter-container {
+    margin: auto;
+    width: 800px;
+    height: 600px;
+}
+
+
+.svg-plot, .canvas-plot {
+    position: absolute;
+}
+
+.my_proteins {
+ text-wrap: balance;
+}
+
+.button{
+    height:30px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+#Progress_Status {
+width: 100%;
+background-color: #ddd;
+position: relative;
+top: 20px;
+display: none;
+}
+
+#myprogressBar {
+width: 2%;
+height: 20px;
+background-color: #4CAF50;
+display: none;
+}
+
+
+</style>
+
+
+
+<div style="display: flex">
+    <form id="home" action="/" method="get">
+      <button id = "home_button" class="button" type="submit" onclick="home();">Home</button>
+    </form>
+   
+
+    <form id="download_figure" action="/render_heatmap_wgcna" method="post">
+      
+      <button id = "download_button" class="button" type="button">Download Figure</button>
+    </form>
+
+      <form id="heatmap_form" action="/heatmap_return" method="get">
+        <button id = "heatmap_button" class="button" type="submit" onclick="back_to_heatmap();">Back to Heatmap</button>
+      </form>
+
+    </form>
+</div>
+
+
+
+<div id="my_dataviz"></div>
+
+<div id="Progress_text" style="display:none; font-size:20px; font-family:Arial; color:white;"> </div>
+<div id="Progress_Status">
+<div id="myprogressBar"></div>
+
+</div>
+
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>\
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js" integrity="sha512-YcsIPGdhPK4P/uRW6/sruonlYj+Q7UHWeKfTAkBW+g83NKM+jMJFJ4iAPfSnVp7BKD4dKMHmVSvICUbE/V1sSw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+<script>
+  document.body.style.backgroundColor = 'black';
+
+    var heatmap_h = {{heatmap_h | tojson}}; // height of heatmap
+    var mods_h = 2000; // height of module plot
+    var dd_h = 1000; // height of dendrogram plot
+
+    var w = 1500,
+        h = mods_h + dd_h + heatmap_h;
+
+    var patients = {{patients | tojson}};
+    var proteins = {{proteins | tojson}};
+    var column_name = {{column_name | tojson}};
+    var column_name_orig = {{column_name | tojson}}; // to use when saving figure to file
+
+    if (column_name.length > 0) {
+      column_name = column_name.split(" ")[0];
+    }
+
+
+
+   var longest_protein = "";
+    var longest_patient = "";
+    for (var i=0; i < proteins.length; i++) {
+      if (proteins[i].length > longest_protein.length)
+        longest_protein = proteins[i];
+    }
+
+    for (var i=0; i < patients.length; i++) {
+      if (patients[i].length > longest_patient.length)
+        longest_patient = patients[i];
+    }
+
+
+    var margin = {
+        top: 50,
+        right: 100,
+        bottom: longest_patient.length*7,
+        left: longest_protein.length*8,
+      };
+
+
+    const svg = d3.select("#my_dataviz").append("svg")
+      .attr("id",'volcanoplot')
+      .attr('width', margin.left + w + margin.right)
+      .attr('height', margin.top + h + margin.bottom)
+      .attr('padding',50)
+      .attr('transform', "translate(" + margin.left + "," + ( margin.top)+ ")")
+
+
+d3
+  .select(".target")  // select the elements that have the class 'target'
+  .style("stroke-width", 8) // change their style: stroke width is not equal to 8 pixels
+
+
+  function home() {
+      document.getElementById("home_button").style.background="#ffd27f";
+      document.getElementById("home").submit();
+  }
+
+  diss1_clustered = {{diss1_clustered | tojson}}; 
+  gene_names = {{gene_names | tojson}}; 
+  dynamicMods = {{dynamicMods | tojson}}; // colors of modules, in order of input proteins
+  dynamicMods_dd = {{dynamicMods_dd | tojson}}; // colors of modules, in dendrogram order
+  diss_l = {{diss_l | tojson}}; // list of module data
+  genenames_l = {{genenames_l | tojson}}; // list of top 30 proteins per module
+  // order, merge, height hclust attributes to draw dendrogram
+  order = {{order | tojson}};
+  merge = {{merge | tojson}};
+  height = {{height | tojson}};
+
+
+
+  // https://stackoverflow.com/questions/43437309/get-a-bright-random-colour-python
+  // https://stackoverflow.com/questions/36721830/convert-hsl-to-rgb-and-hex
+  const randomHexColorCode = () => {
+    let h = Math.floor(Math.random() * 360);                 
+    let s = 50 + Math.random() * 50;                         
+    let l = 40 + Math.random() * 20;
+    
+    // convert hsl to hex
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+
+    const f = n => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+
+    return `#${f(0)}${f(8)}${f(4)}`;                           
+
+  }
+
+
+  let colorscheme = ["#13dee5", "#d3f90e", "#b76d3a", "#e1d5e7", "#ffb347", "#7fbf7f", "#ffe0b3", "#89ecda", "#ff008f", "#777696", "#d923df", "#5c6e27"]
+
+  for (var mod_ind=0; mod_ind < dynamicMods.length; mod_ind++) {
+    colorscheme.push(randomHexColorCode());
+  }
+
+
+  var dg_color = dynamicMods_dd;
+ 
+  var mod_adj = diss_l;
+  var mod_names = genenames_l;
+
+  
+
+  // organize data from each module into list of dictionaries, to use for d3.selectAll format
+  function fill_cluster_info(cluster, mod_name) {
+    out_cluster = [];
+    seen = {};
+
+    var cutoff = 1;
+
+    for (var k =0; k < mod_name.length; k++) {
+      var patient = mod_name[k];
+      var snr = cluster[patient];
+      seen[patient] = [];
+
+      // NOTE only save up to cutoff number of values every time so we only draw half of the heatmap
+      for (var i=0; i < cutoff; i++) {
+        if (snr[i] == null) {
+          out_cluster.push({"Protein1": patient, "Protein2": mod_name[i], "SNR": snr[i]})
+        }
+        else {
+          out_cluster.push({"Protein1": patient, "Protein2": mod_name[i], "SNR": snr[i]})
+        }
+      }
+
+      cutoff+=1;
+
+    }
+
+    return out_cluster;
+
+  }
+
+  var mods = [];
+
+  // fill cluster info for all modules even those greater than the 12 we will display
+  // count the top 12 most significant modules only when displaying
+  for (var mod_ind = 0; mod_ind < mod_adj.length; mod_ind++) {
+   
+    mods.push(fill_cluster_info(mod_adj[mod_ind], mod_names[mod_ind]));
+  }
+
+  
+
+  // heatmap portion
+  var submat = {{submat | tojson}};
+  var raw = {{raw | tojson}};
+
+  // reorder patients by phenotype
+  // get all prefixes in patients
+  var phenotypes = [];
+  var pheno_split = [];
+  var pheno_index = 0;
+
+  for (var i=0; i < patients.length; i++) {
+    var pheno_list = patients[i].match(/[a-zA-Z]+|[0-9]+/g);
+    var letters = /[a-zA-Z]/g;
+
+    for (var k=0; k < pheno_list.length; k++) {
+      if (letters.test(pheno_list[k])) {
+        phenotypes.push(pheno_list[k]);
+        pheno_split.push(pheno_list);
+        pheno_index = k;
+        break;
+      }
+    }
+  }
+
+  phenotypes = Array.from(new Set(phenotypes)).sort();
+
+  var patients_sorted = [];
+
+  for (var i=0; i < phenotypes.length; i++) {
+    var pheno = phenotypes[i];
+
+    for (var k=0; k < pheno_split.length; k++) {
+      var prefix = pheno_split[k][pheno_index];
+
+      if (prefix == pheno) {
+        patients_sorted.push(pheno_split[k].join(""));
+      }
+    }
+  }
+
+
+  var submat_iter = [];
+  var submat_snr = [];
+
+  // organize heatmap data into list of dictionary format, accepted by d3.selectAll plotting
+  for (var k =0; k < patients_sorted.length; k++) {
+        var patient = patients_sorted[k];
+       
+        var snr = submat[patient];
+        var dict = {};
+        for (var i=0; i < snr.length; i++) {
+          var snr_val = snr[i];
+          if ((snr_val > -1) && (snr_val < 1))
+            snr_val = 0;
+          submat_iter.push({"Patient": patient, "Protein": proteins[i], "SNR": snr_val})
+          submat_snr.push(snr_val);
+        }
+  }
+
+
+    // sort proteins by modules 
+    var proteins_sorted = [];
+    var mods_to_proteins = {};
+
+    for (var i=0; i < proteins.length; i++) {
+      var mod = dynamicMods[i];
+      if (mod in mods_to_proteins) {
+        mods_to_proteins[mod].push(proteins[i]);
+      }
+      else {
+        mods_to_proteins[mod] = [];
+        mods_to_proteins[mod].push(proteins[i]);
+      }
+
+     
+    }
+
+    // sort in order of ascending module index
+    let min_mod_start = Math.min(...Object.keys(mods_to_proteins)); // minimum index is not always 0...
+    let max_mod_end = Math.max(...Object.keys(mods_to_proteins))+1;
+
+    for (var mod_ind = min_mod_start; mod_ind < max_mod_end; mod_ind++) {
+      var mod_proteins = mods_to_proteins[mod_ind];
+      proteins_sorted = proteins_sorted.concat(mod_proteins);
+    }
+
+
+    // reorder list of adjacency matrices based on which mod_ind in dynamicMods they match to
+    var mods_dict = {};
+    var mod_names_dict = {};
+
+    for (var i=0; i < mod_names.length; i++) {
+      var mods_cur = mods[i];
+      var modnames_cur = mod_names[i];
+
+      for (var mod_ind = min_mod_start; mod_ind < max_mod_end; mod_ind++) {
+        var mod_proteins = mods_to_proteins[mod_ind];
+        if (mod_proteins.includes(modnames_cur[0])) {
+          mods_dict[mod_ind] = mods_cur;
+          mod_names_dict[mod_ind] = modnames_cur;
+        }
+      
+      }
+    }
+
+
+    var mods_sorted = [];
+    var mod_names_sorted = [];
+
+    var sorted_keys = Object.keys(mods_dict).sort()
+    
+    for (let j=0; j < sorted_keys.length; j++) {
+      mod_ind = sorted_keys[j];
+      mods_sorted.push(mods_dict[mod_ind]);
+      mod_names_sorted.push(mod_names_dict[mod_ind]);
+    }
+
+    if ((max_mod_end - min_mod_start) > 12) {
+      mods_sorted = mods_sorted.slice(min_mod_start, min_mod_start+12);
+      mod_names_sorted = mod_names_sorted.slice(min_mod_start, min_mod_start+12);
+    }
+    
+
+    adjacency_mat_n(mods_sorted, mod_names_sorted, mods_to_proteins);
+
+
+    var wgcna_fig_count = {{wgcna_fig_count | tojson}};
+    var cluster_all = {{cluster_all | tojson}};
+
+     // plot dendrogram based on hclust attributes
+    order_merge_height(order, merge, height, 0.1, dg_color);
+
+
+  // renders arbitrary number of adjacency matrices
+  function adjacency_mat_n(mods, mod_names, mods_to_proteins) {
+
+    var pad = 100;
+
+    var min_snr = -1;
+    var max_snr = 1;
+    var mid_snr = 0;
+
+    // width and height of each matrix
+    var mat_w = (w-700)/8*3;
+    var mat_h = mods_h / 5;
+
+    // Build color scale
+     var myColor = d3.scaleDiverging()
+        .range(["#67001f", "white", "#444444"])
+        .domain([max_snr, mid_snr, min_snr])
+
+
+    // plot matrix for each module
+    for (var mod_ind_count = min_mod_start; mod_ind_count < mod_names.length+min_mod_start; mod_ind_count++) {
+      let mod_ind = mod_ind_count - min_mod_start; // keep track of difference between starting module index and 0 index
+
+      // get data and list of top 30 protein names for this module
+      var mat = mods[mod_ind];
+      var allproteins_mod = mods_to_proteins[mod_ind_count];
+      var names = mod_names[mod_ind];
+
+      var seen = [];
+
+      var x1 = d3.scaleBand()
+      .range([ 0, mat_w ])
+      .domain(names)
+      .padding(0.03);
+
+      var y1 = d3.scaleBand()
+      .range([ mat_h, pad ])
+      .domain(names)
+      .padding(0.03);
+
+      // black background for axis text to show up 
+      svg.append("g")
+        .attr("transform", "translate(" + (margin.left/2 + (mat_w + pad)*(mod_ind%3)) + "," + (mat_h + (mods_h/5) * Math.floor(mod_ind/3)) + ")")
+        .style("position", "fixed")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return 0 })
+        .attr("width", 1.25*mat_w )
+        .attr("height", mat_w/4)
+        .style("fill", function() { return "black"} )
+
+      // only need 2 axes for triangle plot, not full heatmap
+      svg.append("g")
+      .attr("transform", "translate(" + (margin.left/2 + (mat_w + pad)*(mod_ind%3)) + "," + (mat_h + (mods_h/5) * Math.floor(mod_ind/3)) + ")")
+      .attr("class", "adjAxis")
+      .call(d3.axisBottom(x1))
+      .selectAll("text")  
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", "-.8em")
+      .attr("transform", "rotate(-90)")
+      .style('font-size', 7);
+
+
+      // black background for axis text to show up 
+      svg.append("g")
+        .attr("transform", "translate("+(margin.left/2 + (mat_w + pad)*(mod_ind%3) + mat_w) +"," + (2*margin.top + mods_h/5 * Math.floor(mod_ind/3)) + ")")
+        .style("position", "fixed")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return 0 })
+        .attr("width", mat_w/4 )
+        .attr("height", 1.25*mat_w)
+        .style("fill", function() { return "black"} )
+
+      svg.append("g")
+        .attr("transform", "translate("+(margin.left/2 + (mat_w + pad)*(mod_ind%3) + mat_w) +"," + (mods_h/5 * Math.floor(mod_ind/3)) + ")")
+        .attr("class", "adjAxis")
+        .call(d3.axisRight(y1))
+        .selectAll("text")  
+        .style('font-size', 7);
+
+      var b = (-1)*mat_h;
+
+
+      // plot rectangles for heatmap
+      svg.append("g")
+        .attr("transform", "translate(" + (margin.left/2 + (mat_w + pad)*(mod_ind%3)) + "," + (mods_h/5) * Math.floor(mod_ind/3) + ")")
+        .selectAll()
+          .data(mat, function(d) {return d.Protein1+':'+d.Protein2;})
+          .enter()
+          .append("rect")
+            .attr("x", function(d) { 
+              return x1(d.Protein1);
+            })
+            .attr("y", function(d) { 
+              return y1(d.Protein2); 
+            })
+            .attr("width", x1.bandwidth() )
+            .attr("height", y1.bandwidth() )
+            .style("fill", function(d) { 
+              if (typeof(d.SNR) != "number") {
+                return myColor(max_snr);
+              }
+              return myColor(d.SNR)
+            })
+
+
+      // label modules by color
+      svg.append("g")
+        .attr("transform", "translate(" + (margin.left/2 + (mat_w + pad)*(mod_ind%3)) + "," + (mat_h/2 + (mods_h/5) * Math.floor(mod_ind/3)) + ")")
+        .append("rect")
+        .attr("x", function(d) { 
+          return x1(0);
+        })
+        .attr("y", function(d) { 
+          return y1(0); 
+        })
+        .attr("width", mat_w/10 )
+        .attr("height", mat_w/10 )
+        .style("fill", function(d) { 
+          return colorscheme[mod_ind];
+        })
+
+      svg.append("g")
+        
+
+      svg.append("g")
+        .attr("transform", "translate(" + (margin.left/2 + (mat_w + pad)*(mod_ind%3)) + "," + (mat_h/2 - mat_w/10 + (mods_h/5) * Math.floor(mod_ind/3)) + ")")
+        .append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .text(function(d) {
+          return "Module proteins: " + allproteins_mod.length.toString();
+        })
+        .style("fill", "grey" );
+
+
+      d3.selectAll("adjAxis line")
+      .style("stroke","white");
+
+      d3.selectAll(".adjAxis path")
+      .style("stroke","white");
+
+      d3.selectAll(".adjAxis text")
+      .style("fill","white");
+
+
+    }
+
+
+    // plot legend on the right of matrices
+    var color_legend = d3.scaleDiverging()
+    .range(["#720000", "white", "#444444"])
+    .domain([0, 50, 100])
+
+    var legend_data = [...Array(100).keys()]
+
+    svg.append("g")
+      .attr("transform", "translate(" + (w - 200) + ",0)")
+      .selectAll()
+        .data(legend_data)
+        .enter()
+        .append("rect")
+          .attr("x", function(d) { return 0 })
+          .attr("y", function(d, i) { return 200 + i*5 })
+          .attr("width", 45 )
+          .attr("height", 5 )
+          .style("fill", function(d) { return color_legend(d)} )
+
+    // label values on legend colors
+    var legend_text = [0, 
+      0.2 * (max_snr - min_snr),
+      0.4 * (max_snr - min_snr),
+      0.6 * (max_snr - min_snr),
+      0.8 * (max_snr - min_snr),
+      (max_snr - min_snr)]
+
+    legend_text.reverse()
+          
+
+    svg.append("g")
+      .attr("transform", "translate(" + (w - 150) + ",0)")
+      .selectAll()
+        .data(legend_text)
+        .enter()
+        .append("text")
+          .attr("x", function(d) { return 0 })
+          .attr("y", function(d, i) { return 200 + i*5*20 })
+          .text(function(d) { return (d+min_snr).toFixed(4); })
+          .style("fill", function(d) { return "grey"} )
+
+    svg.append("g")
+      .attr("transform", "translate(" + (w - 200) + ",0)")
+      .append("text")
+        .attr("x", function(d) { return 0 })
+        .attr("y", function(d, i) { return 150})
+        .text("WGCNA")
+        .style("fill", function(d) { return "red"} )
+        .style('font-size', 24);
+
+
+    svg.append("g")
+      .attr("transform", "translate(" + (w - 80) + ",0)")
+      .append("text")
+        .attr("x", function(d) { return 0 })
+        .attr("y", function(d, i) { return 200})
+        .text("Positive correlation")
+        .style("fill", function(d) { return "grey"} )
+        .style('font-size', 16)
+
+    svg.append("g")
+      .attr("transform", "translate(" + (w - 80) + ",0)")
+      .append("text")
+        .attr("x", function(d) { return 0 })
+        .attr("y", function(d, i) { return 200 + 5*5*20})
+        .text("Negative correlation")
+        .style("fill", function(d) { return "grey"} )
+        .style('font-size', 16)
+
+    }
+
+
+  // plot dendrogram nased on order, merge, height, hclust attributes 
+  function order_merge_height(order, merge, height, hang, dg_color) {
+    var nMerge = order.length-1;
+    var cluster = new Array(order.length +1).fill(null); // pad first index with null since R is 1-indexed
+    var singleton = new Array(order.length + 1).fill(null);
+    var seq = Array.from({length: order.length}, (_, i) => i + 1);
+
+    for (var i=0; i < order.length; i++) {
+      singleton[order[i]] = seq[i];
+    }
+
+    var range = [Math.min(...height), Math.max(...height)]; // use spread syntax or Math.max won't work 
+    var hang_scaled = hang * (range[1] - range[0]);
+    var rplot_height = 1.4;
+    var js_height = dd_h - 100;
+
+    // height values in hclust are on a different scale
+    // rescale to height of javascript figure
+    function rescale_height(old_height) {
+      return old_height * js_height / rplot_height;
+    }
+ 
+    var lines = [];
+
+
+    // draw each branch of dendrogram
+    for (var m =0; m < nMerge; m++)
+    {
+      var o1 = merge[m][0]; // left child
+      var o2 = merge[m][1]; // right child
+
+      var h = height[m]; // height of branch for non-leaf nodes
+      var hh = h-hang_scaled; // fixed height for leaf nodes
+      // var hh = if (hang>0) h-hang_scaled else range[0];
+      var h1, h2, x1, x2 = 0;
+
+      // o1 and o2 are 1-indexed
+      // negative o values means leaf, so draw fixed height 
+      // otherwise draw height based on heights from hclust
+      if (o1 < 0) 
+        h1 = hh; 
+      else 
+        h1 = height[o1-1];
+      if (o2 < 0)
+        h2 = hh;
+      else
+        h2 = height[o2-1];
+
+      if (o1 < 0)
+        x1 = singleton[-1*o1];
+      else
+        x1 = cluster[o1];
+      if (o2 < 0)
+        x2 = singleton[-1*o2];
+      else
+        x2 = cluster[o2];
+       
+
+       cluster[m+1] = (x1 + x2) / 2;
+
+      // rescale for total height in javascript figure
+      h1 = rescale_height(h1);
+      h = rescale_height(h);
+      h2 = rescale_height(h2);
+
+      lines.push({x : [x1, x1, x2, x2], y: [h1, h, h, h2]});
+    
+    }
+
+    // read through all the xs to find the width range of the r plot, so we can use this information to rescale the plot
+    var rplot_min_x = Infinity;
+    var rplot_max_x = -1;
+
+    for (var i =0; i < lines.length; i++) {
+      line = lines[i];
+
+      for (var j=0; j < line.x.length; j++) {
+        x = line.x[j];
+        if (x > rplot_max_x)
+          rplot_max_x = x;
+        if (x < rplot_min_x)
+          rplot_min_x = x;
+      }
+    }
+
+    // min max are 1 and order.length respectively
+
+    var rplot_width = rplot_max_x - rplot_min_x;
+    var js_width = 1000;
+    var js_height = dd_h;
+
+    function rescale_width(old_width) {
+      return old_width * js_width / rplot_width;
+    }
+
+    for (var i =0; i < lines.length; i++) {
+      line = lines[i];
+
+      for (var j=0; j < line.x.length; j++) {
+        line.x[j] = rescale_width(line.x[j]);
+      }
+    }
+
+
+    // render lines based on info we collected above
+    svg.append("g")
+      .attr('transform', 'translate(0, 0) rotate(270) translate(-' + (mods_h + dd_h - 300) + ',' + (-4 + margin.left) + ')')
+      .selectAll('path')
+      .data( lines )
+      .enter()
+      .append('path')
+      .attr("d", function(d) {        
+        return "M" + d.y[0] + "," + d.x[0] + " " +
+        d.y[1] + "," + d.x[1] + " " +
+        d.y[2] + "," + d.x[2] + " " +
+        d.y[3] + "," + d.x[3];
+      })
+      .style("fill", 'none')
+      .attr("stroke", 'grey')
+
+    var xScale= d3.scaleLinear()
+    .range([ 0,js_width])
+    .domain([0, dg_color.length])
+
+    // render module colors underneath dendrogram
+    svg.append("g")
+    .attr('transform', 'translate(' + margin.left + ',' + (mods_h + dd_h - js_width/10 - 100) + ')')
+      .selectAll('.rect')
+      .data(dg_color)
+      .enter()
+      .append("rect")
+      .attr("width", js_width/(dg_color.length) + 1)
+      .attr("height", js_width/10)
+      .attr("x", function(d, i) {
+        return xScale(i);
+      })
+      .attr("y", 0)
+      .attr("fill", function(d, i) {
+        return colorscheme[d - min_mod_start]; // again account for mod_min_start
+      });
+
+
+    svg.append("g")
+      .attr("transform", 'translate(' + (margin.left + js_width/2 - 100) + ',' + (mods_h) + ')')
+      .append("text")
+        .attr("x", function(d) { return 0 })
+        .attr("y", function(d, i) { return 0})
+        .text("WGCNA Module Dendrogram")
+        .style("fill", function(d) { return "red"} )
+        .style('font-size', 24);
+
+  }
+
+
+  var render_rects = []; // [{x:, y:}, {x:, y:}]
+  var proteins_bymod = [];
+  var efficient_submat_iter = {};
+  var mods_n_proteins_sorted = [];
+  var ids_to_remove = [];
+
+    function prep_rects_for_render(data, patients, proteins, data_list, dynamicMods, mods_to_proteins) {
+      var myGroups = patients;
+      var myVars = proteins;
+
+      // Build X scales and axis:
+      var x = d3.scaleBand()
+        .range([ 0, w - margin.left - margin.right ])
+        .domain(myGroups)
+        .padding(0.2);
+
+
+      // Build Y scales and axis:
+      var y = d3.scaleBand()
+        .range([ heatmap_h, margin.bottom + margin.top ])
+        .domain(myVars)
+        .padding(0.2);
+
+
+      // find y bounds of each module so that we can draw different color background for each module
+      var mods_bounds = {};
+
+      // at the same time figure out order mods will be drawn in and what color each mod is
+      var location_mod_length = {}; // min_y : (mod_ind, # proteins)
+
+      // iterate through mods_to_proteins map in natural numerical order
+      for (var mod_ind = min_mod_start; mod_ind < Object.keys(mods_to_proteins).length + min_mod_start; mod_ind++) {
+        var proteins_mod = mods_to_proteins[mod_ind];
+        var mod_max = -1;
+        var mod_min = Infinity;
+
+        for (var p_mod_ind = 0; p_mod_ind < proteins_mod.length; p_mod_ind++) {
+          var p_mod = proteins_mod[p_mod_ind];
+          var y_p_mod = y(p_mod);
+
+          if (y_p_mod > mod_max)
+            mod_max = y_p_mod;
+          if (y_p_mod < mod_min)
+            mod_min = y_p_mod;
+        }
+
+        // add width of box to max so we cover through the next protein
+        mods_bounds[mod_ind] = [mod_min, mod_max+y.bandwidth()];
+
+        location_mod_length[mod_min] = [mod_ind, proteins_mod.length];
+      }
+
+
+      var rotated = 0;
+
+      let keys_sorted = Object.keys(location_mod_length).sort((a, b) => a - b);
+
+      for (let key of keys_sorted) {
+        mods_n_proteins_sorted.push(location_mod_length[key]);
+      }
+  
+      // Build color scale
+      data_list.sort((a, b) => a - b);
+      var min_snr = data_list[0];
+      var max_snr = data_list[data_list.length-1];
+      var ninetyfive_perc_snr = data_list[Math.floor(data_list.length*0.99)]
+      var median_snr = data_list[Math.floor(data_list.length/2)];
+
+      var myColor = d3.scaleLinear()
+        .range(["red", "white", "white", "blue"])
+        .domain([max_snr, 1, -1, -1*max_snr])
+
+      if (raw) {
+        myColor = d3.scaleLinear()
+          .range(["red", "white", "blue"])
+          .domain([ninetyfive_perc_snr, ninetyfive_perc_snr/2, 0])
+
+      }
+
+      // black bg for heatmap, so white values can show up in SVG
+      svg.append("g")
+        .attr("transform", "translate(" + (margin.left) + "," + (h - heatmap_h) + ")")
+        .style("position", "fixed")
+        .attr("id", "heatmap_bg")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return 0; })
+        .attr("width", w - margin.left - margin.right )
+        .attr("height", heatmap_h - margin.bottom - margin.top)
+        .style("fill", function() { return "black"} )
+
+      ids_to_remove.push("heatmap_bg");
+
+
+      // draw module colors behind y-axis
+      for (var mod_ind = min_mod_start; mod_ind < Object.keys(mods_bounds).length+min_mod_start; mod_ind++) {
+        svg.append("g")
+          .attr("transform", "translate(" + (0) + "," + (mods_h + dd_h - margin.bottom) + ")")
+          .append('rect')
+          .attr("id", function(d, i) { 
+            ids_to_remove.push("heatmap_axis_bg_" + mod_ind.toString());
+            return "heatmap_axis_bg_" + mod_ind.toString();
+          })
+          .attr("x", function() { return 0 })
+          .attr("y", function() { return mods_bounds[mod_ind][0]; })
+          .attr("width", margin.left)
+          .attr("height", function() { return mods_bounds[mod_ind][1] - mods_bounds[mod_ind][0]; })
+          .style("fill", function() { return colorscheme[mod_ind-min_mod_start]} ) // again account for min_mod_start
+      }
+
+
+      svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + (h - 3*margin.bottom) + ")")
+        .style("position", "fixed")
+        .attr("id", "yaxisbg_heatmap")
+        .append('rect')
+        .attr("x", function() { return 0 })
+        .attr("y", function() { return window.innerHeight - 2*margin.bottoms })
+        .attr("width", w - margin.left - margin.right )
+        .attr("height", 2*margin.bottom)
+        .style("fill", function() { return "black"} )
+
+      ids_to_remove.push("yaxisbg_heatmap")
+
+
+      var xaxis = svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + (h - 3*margin.bottom) + ")")
+        .call(d3.axisBottom(x))
+        .style("position", "fixed")
+        .attr("id", "yaxis_heatmap")
+        .attr("class", "heatmapAxis") 
+        .selectAll("text")  
+        .style("text-anchor", "end")
+        .style("font-size",12)
+        .attr("dx", "-.8em")
+        .attr("dy", "-.5em")
+        .attr("transform", "rotate(-90)")
+
+      ids_to_remove.push("yaxis_heatmap")
+
+
+      var yaxis = svg.append("g")
+      .attr("transform", "translate(" + (margin.left) + "," + (mods_h + dd_h - margin.bottom) + ")")
+        .call(d3.axisLeft(y))
+        .style("position", "fixed")
+        .attr("id", "xaxis_heatmap")
+        .attr("class", "heatmapAxis")
+        .selectAll("text")  
+        .style("font-size",12)
+        .style('fill', 'black');
+
+      ids_to_remove.push("xaxis_heatmap")
+
+
+      yaxis.each(function (d, i) {
+            proteins_bymod.push(d)
+        });
+
+
+
+
+      var color_legend = d3.scaleLinear()
+      .range(["blue", "white", "white", "red"])
+      .domain([0, 50-(1/max_snr)*100, 50+(1/max_snr)*100, 100])
+
+      if (raw) {
+        color_legend = d3.scaleLinear()
+        .range(["blue", "white", "red"])
+        .domain([0, 50, 100])
+      }
+
+      var legend_data = [...Array(100).keys()];
+      legend_data.reverse();
+
+      svg.append("g")
+        .attr("transform", "translate(" + (w + 50) + "," + (mods_h + dd_h) + ")")
+        .attr("id", "legend_heatmap")
+        .selectAll()
+          .data(legend_data)
+          .enter()
+          .append("rect")
+            .attr("x", function(d) { return 0 })
+            .attr("y", function(d, i) { return 50 + i*5 })
+            .attr("width", 45 )
+            .attr("height", 5 )
+            .style("fill", function(d) { return color_legend(d)} )
+
+        ids_to_remove.push("legend_heatmap")
+
+        var legend_text = [0, 
+          0.25 * (2*max_snr),
+          0.5 * (2*max_snr),
+          0.75 * (2*max_snr),
+          (2*max_snr)];
+
+
+        if (raw) {
+          legend_text = [0, 
+          0.2 * (ninetyfive_perc_snr),
+          0.4 * (ninetyfive_perc_snr),
+          0.6 * (ninetyfive_perc_snr),
+          0.8 * (ninetyfive_perc_snr),
+          (ninetyfive_perc_snr)];
+        }
+
+      legend_text.reverse();
+
+      svg.append("g")
+        .attr("transform", "translate(" + (w + 100) + "," + (mods_h + dd_h) + ")")
+        .attr("id", "legend_heatmap_text")
+        .selectAll()
+          .data(legend_text)
+          .enter()
+          .append("text")
+            .attr("x", function(d) { return 0 })
+            .attr("y", function(d, i) { return 50 + i*5*(100/(legend_text.length-1)) })
+            .text(function(d) { 
+              if (raw) 
+                return (d).toFixed(3);
+
+              return (d+(-1)*max_snr).toFixed(3);
+            })
+            .style("fill", function(d) { return "grey"} )
+
+      ids_to_remove.push("legend_heatmap_text")
+
+
+      svg.append("g")
+        .attr("transform", "translate(" + (w + 20) + "," + (mods_h + dd_h + 24) + ")")
+        .attr("id", "legend_title")
+        .append("text")
+          .attr("x", function() {
+            if (raw)
+              return column_name.length+2*20;
+            return column_name.length;
+          })
+          .attr("y", 0)
+          .text(function() {
+            if (raw)
+              return column_name;
+            return "VST " + column_name;
+          })
+          .style("fill", function(d) { return "red"} )
+          .style("font-size", 24)
+
+      ids_to_remove.push("legend_title");
+
+
+
+        // compute positions of all the rects
+        for (let i=0; i < data.length; i++) {
+          // save positions of proteins so we know where the user's cursor is selecting later
+          // remember that svg is shifted down by margin.top so y value is shifted
+          // save pos as half of rect position since middle is easier to target
+          // 30 is height of button
+          // 32 is height of text input: 30 height + 2*1px border
+          // protein_pos[data[i].Protein] = [x(data[i].Patient), y(data[i].Protein) + margin.top + 30*2 + 32 + y.bandwidth()/2];
+
+          render_rects.push({"Patient": x(data[i].Patient), "Protein": y(data[i].Protein), "SNR": myColor(data[i].SNR), "width": x.bandwidth(), "height": y.bandwidth()});
+
+          let new_str = data[i].Protein + "_" + data[i].Patient;
+          efficient_submat_iter[new_str] = (data[i].SNR);
+        }
+
+    }
+
+    prep_rects_for_render(submat_iter, patients_sorted, proteins_sorted, submat_snr, dynamicMods, mods_to_proteins);
+
+
+    heatmap_2d_realtime(submat_iter, patients_sorted, proteins_sorted, submat_snr);
+
+
+
+    function build_matrix_for_download(submat_iter, patients_sorted, proteins_bymod) {
+
+      let matrix = [];
+      for (let i = 0; i < proteins_bymod.length; i++) {
+          matrix[i] = [];
+          let p_temp = proteins_bymod[i];
+
+          for (let j = 0; j < patients_sorted.length; j++) {
+            let pat_temp = patients_sorted[j];
+
+            let new_str = p_temp + "_" + pat_temp;
+            matrix[i][j] = efficient_submat_iter[new_str];
+          }
+      }
+
+      return matrix;
+
+
+    }
+
+    
+    function heatmap_2d_realtime(data, patients, proteins, data_list) {
+      var myGroups = patients;
+      var myVars = proteins;
+
+      // Build X scales and axis:
+      var x = d3.scaleBand()
+        .range([ 0, w - margin.left - margin.right ])
+        .domain(myGroups)
+        .padding(0.2);
+
+
+      // Build X scales and axis:
+      var y = d3.scaleBand()
+        .range([ heatmap_h, margin.bottom + margin.top ])
+        .domain(myVars)
+        .padding(0.2);
+
+
+      var rotated = 0;
+
+  
+      // Build color scale
+      data_list.sort((a, b) => a - b);
+      var min_snr = data_list[0];
+      var max_snr = data_list[data_list.length-1];
+      var ninetyfive_perc_snr = data_list[Math.floor(data_list.length*0.99)]
+      var median_snr = data_list[Math.floor(data_list.length/2)];
+
+      var myColor = d3.scaleLinear()
+        .range(["red", "white", "white", "blue"])
+        .domain([max_snr, 1, -1, -1*max_snr])
+
+      if (raw) {
+        myColor = d3.scaleLinear()
+          .range(["red", "white", "blue"])
+        
+          .domain([ninetyfive_perc_snr, ninetyfive_perc_snr/2, 0])
+
+      }
+
+      let top_bound = window.pageYOffset;
+      let window_height = window.innerHeight;
+      let bottom_bound = top_bound + window_height;
+
+      top_bound -= window_height /2;
+      bottom_bound += window_height / 2;
+
+      let render_rects_filter = render_rects.filter(function(d)
+       {
+            return ((d.Protein + h - margin.bottom - heatmap_h) > top_bound) & ((d.Protein + h - margin.bottom - heatmap_h) < bottom_bound);
+       });
+
+
+      svg.append("g")
+      .attr("transform", "translate(" + margin.left + "," + (h - margin.bottom - heatmap_h) + ")")
+      .attr("id", "curr_heatmap")
+      .selectAll()
+      .data(render_rects_filter)
+      .enter()
+      .append("rect")
+      .attr("x", function(d) { return d.Patient; })
+      .attr("y", function(d) { return d.Protein; })
+      .attr("width", function(d) { return d.width; })
+      .attr("height", function(d) { return d.height; })
+      .style("fill", function(d) { return d.SNR;} );
+
+      ids_to_remove.push("curr_heatmap");
+
+      // bring axes up so they don't get lost behind the rects
+      d3.select("#yaxisbg_heatmap").raise();
+      d3.select("#yaxis_heatmap").raise()
+      
+
+
+      window.onscroll = function() {myFunction()};
+
+      function myFunction() {
+        top_bound = window.pageYOffset;
+        window_height = window.innerHeight;
+        bottom_bound = top_bound + window_height;
+
+        top_bound -= window_height /2;
+        bottom_bound += window_height / 2;
+
+        // clear current heatmap 
+        d3.select("#curr_heatmap").remove();
+
+        render_rects_filter = render_rects.filter(function(d)
+         {
+              return ((d.Protein + h - margin.bottom - heatmap_h) > top_bound) & ((d.Protein + h - margin.bottom - heatmap_h) < bottom_bound);
+         });
+
+
+        svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + (h - margin.bottom - heatmap_h) + ")")
+        .attr("id", "curr_heatmap")
+        .selectAll()
+        .data(render_rects_filter)
+        .enter()
+        .append("rect")
+        .attr("x", function(d) { return d.Patient; })
+        .attr("y", function(d) { return d.Protein; })
+        .attr("width", function(d) { return d.width; })
+        .attr("height", function(d) { return d.height; })
+        .style("fill", function(d) { return d.SNR;} );
+
+
+        if (window.pageYOffset >= (mods_h + dd_h)) {
+
+          d3.select("#legend_heatmap").nodes()[0].setAttribute("transform", "translate(" + (w + 50) + "," + (window.pageYOffset) + ")")
+
+          d3.select("#legend_heatmap_text").nodes()[0].setAttribute("transform", "translate(" + (w + 100) + "," + (window.pageYOffset) + ")")
+
+          d3.select("#legend_title").nodes()[0].setAttribute("transform", "translate(" + (w + 20) + "," + (window.pageYOffset) + ")")
+
+          d3.select("#yaxis_heatmap").nodes()[0].setAttribute("transform", "translate(" + margin.left + "," + (window.pageYOffset + window.innerHeight - 3*margin.bottom) + ")");
+
+          d3.select("#yaxisbg_heatmap").nodes()[0].setAttribute("transform", "translate(" + margin.left + "," + (window.pageYOffset + window.innerHeight - 3*margin.bottom) + ")");
+
+          d3.select("#yaxisbg_heatmap").raise();
+          d3.select("#yaxis_heatmap").raise()
+          
+        }
+
+      }
+
+
+    }
+
+
+  
+  // button for returning to heatmap
+  function back_to_heatmap() {
+    document.getElementById("heatmap_button").style.background="#ffd27f";
+
+      document.getElementById("my_dataviz").remove();
+
+      document.getElementById("Progress_text").style.display = "inline";
+      document.getElementById("Progress_text").innerHTML="Progress (load previous heatmap): ";
+
+     document.getElementById("Progress_Status").style.display = "block";
+     var element = document.getElementById("myprogressBar");
+     element.style.display = "block";
+
+
+     var width = 1;
+     var proteins_set = 15927;
+     var proteins = {{total_proteins_n | tojson}};
+     console.log(proteins);
+     var ratio = proteins / 15927;
+     var ms = 0;
+     if (raw == true)
+      ms = 500*10 * ratio;
+    if (raw == false)
+       ms = 700*10 * ratio;
+
+     var identity = setInterval(scene, ms);
+     function scene() {
+        if (width >= 100) {
+           clearInterval(identity);
+        } 
+        else {
+           width++;
+           element.style.width = width + '%';
+        }
+     }
+
+    document.getElementById("heatmap_form").submit();
+  }
+
+
+
+  document.getElementById("download_button").addEventListener("click", function () {
+    document.getElementById("download_button").style.background="#ffd27f";
+
+    var data_dict = {};
+
+    var matrix_dl = build_matrix_for_download(submat_iter, patients_sorted, proteins_bymod); 
+    data_dict['submat'] = matrix_dl;
+    data_dict['submat_proteins'] = proteins_bymod;
+    data_dict['submat_patients'] = patients_sorted;
+    data_dict['cluster_all'] = cluster_all;
+    data_dict['mods'] = mods_n_proteins_sorted;
+    data_dict['colorscheme'] = colorscheme;
+
+
+    let svgElement = document.getElementById('volcanoplot');
+    const newHeight = mods_h + dd_h;
+    svgElement.setAttribute('height', newHeight);
+
+    
+    // https://gist.github.com/mcmoe/d61e6f930f68c1999f8dd6c8a46f2600
+    // https://www.digitalocean.com/community/tutorials/js-canvas-toblob
+    let svgString = new XMLSerializer().serializeToString(svgElement); // Serialize the svg to string
+    let base64 = btoa(svgString); // Use btoa to convert the svg to base64
+    let imgSource = 'data:image/svg+xml;base64,' + base64;
+
+
+    // anchor element for downloading
+    const anchor = document.createElement('a');
+    anchor.href = imgSource;
+
+    // set filename
+    let cur_dataset = {{cur_dataset | tojson}};
+    anchor.download = 'figures_' + cur_dataset.split('.')[0] + '_wgcna_' + wgcna_fig_count.toString() + '.svg'; 
+
+    // click download link
+    anchor.click();
+
+    fetch("/render_heatmap_wgcna", {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: "post",
+      body: JSON.stringify(data_dict)
+    })
+    .then(response => response.json())
+    .then(res => {
+      if (res.redirect) {
+        window.location.href = res.redirect;
+      }
+    });
+
+
+  
+
+    document.getElementById("my_dataviz").remove();
+
+    document.getElementById("Progress_text").style.display = "inline";
+    document.getElementById("Progress_text").innerHTML="Progress (download figure and back to heatmap): ";
+
+     document.getElementById("Progress_Status").style.display = "block";
+     var element = document.getElementById("myprogressBar");
+     element.style.display = "block";
+
+
+     var width = 1;
+     var proteins_set = 15927;
+     var proteins = {{total_proteins_n | tojson}};
+     console.log(proteins);
+     var ratio = proteins / 15927;
+     var ms = 0;
+
+     if (raw == true)
+      ms = 500*10 * ratio;
+     if (raw == false)
+       ms = 700*10 * ratio;
+
+     var identity = setInterval(scene, ms);
+     function scene() {
+        if (width >= 100) {
+           clearInterval(identity);
+        } 
+        else {
+           width++;
+           element.style.width = width + '%';
+        }
+     }
+
+
+  });
+
+
+
+    
+
+
+</script>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<style>
+  
+.button{
+    height:30px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+#Progress_Status {
+width: 100%;
+background-color: #ddd;
+position: relative;
+top: 20px;
+display: none;
+}
+
+#myprogressBar {
+width: 2%;
+height: 20px;
+background-color: #4CAF50;
+display: none;
+}
+
+</style>
+
+
+<div style="display: flex;">
+    <form id="home" action="/" method="get">
+      <button class="button" type="submit" onclick="home();">Home</button>
+    </form>
+</div>
+
+
+<div id="my_dataviz"></div>
+
+<div id="Progress_text" style="display:none; font-size:20px; font-family:Arial; color:black;"> </div>
+<div id="Progress_Status">
+<div id="myprogressBar"></div>
+
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script>
+  var w = 1000,
+        h = 2200;
+
+    var margin = {
+        top: 50,
+        right: 50,
+        bottom: 50,
+        left: 50,
+      };
+      
+    var regionWidth = w/8;
+    var regionHeight = h;
+    var pointA = regionWidth,
+      pointB = w - regionWidth;
+
+    var sections = 4;
+
+    let cur_dataset = {{cur_dataset | tojson}};
+    let pathway_fig_count = {{pathway_fig_count | tojson}};
+    let column_name = {{column_name | tojson}};
+    let id_name = "pathway_" + cur_dataset.split(".")[0] + "_" + pathway_fig_count.toString()
+
+
+    const svg = d3.select("#my_dataviz").append("svg")
+      .attr("id", id_name)
+      .attr('width', margin.left + w + margin.right)
+      .attr('height', margin.top + h + margin.bottom)
+      .attr('padding',50)
+      .attr('transform', "translate(" + margin.left + "," +  margin.top+ ")");
+
+
+    fig = {{fig | tojson}};
+    index = {{index | tojson}};
+
+    fig_iter = [];
+
+    for (key in fig) {
+        pathway = fig[key][0];
+        pval = fig[key][1];
+        NES = fig[key][2];
+
+        ind = -1;
+
+        for (let j = 0; j < index.length; j++) {
+          if (index[j] == pathway)
+            ind = j;
+        }
+
+        stars = ""
+        if (pval < 0.001)
+          stars = "***"
+        else if (pval < 0.01)
+          stars = "**"
+        else if (pval < 0.05)
+          stars = "*"
+        
+        new_d = {"pathway": pathway, "pval": pval, "NES": NES, "stars": stars, "index": parseInt(ind)}
+
+        fig_iter.push(new_d)
+    }
+
+    levels = {{levels | tojson}};
+
+
+
+    heatmap_single(fig_iter);
+
+    
+    
+    // pathway map is rendered as a single column heatmap
+    function heatmap_single(data){
+     
+      var heatmap_single_h = h;
+      var heatmap_single_w = w;
+
+      var maxYValue = Math.ceil(d3.max(data, function(d) { return d.index; }));
+      var halfmax = maxYValue / 2;
+
+
+      var domain = [];
+      for (var i = 0; i <= maxYValue; i++) {
+          domain.push(i);
+      }
+      domain.reverse();
+
+      var yScale = d3.scaleBand()
+        .domain(domain)
+          .range([0, heatmap_single_h-2*margin.top-2*margin.bottom]);
+
+      var yScale_legend = d3.scaleLinear()
+        .domain([-1, 1])
+          .range([(heatmap_single_h-margin.top) / 2 - 100, (heatmap_single_h-margin.top) / 2 + 100]);
+
+      colorScale = d3.scaleLinear()
+      .domain([maxYValue,halfmax, 0])
+      .range(["purple", "#F8F8FF", "yellow"]);
+
+      colorScale_legend = d3.scaleLinear()
+      .domain([-1, 0, 1])
+      .range(["purple", "#F8F8FF", "yellow"]);
+
+      var box_w = heatmap_single_w/15;
+      var box_h = yScale.bandwidth();
+
+      // render rectangles
+      svg.selectAll()
+      .data(data)
+      .enter()
+      .append("rect")
+        .attr("x", function(d) { return w/10; })
+        .attr("y", function(d) {  return yScale(d.index)})
+        .attr("width", box_w )
+        .attr("height", box_h )
+        .style("fill", function(d) {  return colorScale(d.index)} )
+        .style("opacity", 1.0)
+ 
+        // label rectanges with pathway names
+        svg.selectAll()
+      .data(data)
+      .enter()
+      .append("text")
+        .attr("x", function(d) { return w/10 + 1.2*box_w; })
+        .attr("y", function(d) { return yScale(d.index) + 3*box_h/4;})
+        .text(function(d) {
+          return d.pathway;
+        })
+        .style("font-size", "15px")
+
+        // add stars to any pathways that were significant
+        const starred = data.filter(s => s.stars);
+
+
+        svg.selectAll()
+      .data(starred)
+      .enter()
+      .append("text")
+        .attr("x", function(d) { return  w/10 + box_w/2; })
+        .attr("y", function(d) { return yScale(d.index) + box_h;})
+        .text(function(d) {
+          return d.stars;
+        })
+        .style("font-size", "14px")
+        .style("text-anchor", "middle")
+        .style("fill", "silver")
+        .attr("font-weight", "bold");
+
+        // static gradient for legend
+        var legend_data = [];
+
+        for (i=-1.0; i <= 1.0; i+=0.05) {
+          legend_data.push({"value": i})
+        }
+
+        var box_h_leg = 200 / 40;
+
+        svg.selectAll()
+      .data(legend_data)
+      .enter()
+      .append("rect")
+        .attr("x", function(d) { return  w/10 + heatmap_single_w/sections + 6*box_w; })
+        .attr("y", function(d) { return yScale_legend(d.value)})
+        .attr("width", box_w/2 )
+        .attr("height", box_h_leg )
+        .style("fill", function(d) { return colorScale_legend(d.value)} )
+        .style("stroke-width", 4)
+        .style("stroke", "none")
+        .style("opacity", 1.0)
+
+
+        svg.append("text")
+        .attr("fill", "black")  
+        .attr("x", w/10 + heatmap_single_w/sections + box_w*6.5)
+        .attr("y", (heatmap_single_h-margin.top) / 2 - 120)
+        .attr("text-anchor", "middle")
+        .text("fgseaRes.NES")
+        .style("font-size", "22px");
+
+        var maxNES = Math.ceil(d3.max(data, function(d) { return d.NES; }));
+        var minNES = Math.ceil(d3.min(data, function(d) { return d.NES; }));
+        var halfNES = (maxNES - minNES) / 2 + minNES;
+
+
+        svg.append("text")
+        .attr("fill", "black")  
+        .attr("x", w/10 + heatmap_single_w/sections + box_w*7)
+        .attr("y", (heatmap_single_h-margin.top) / 2 - box_h_leg*legend_data.length/2 + box_h_leg)
+        .attr("text-anchor", "middle")
+        .text(maxNES);
+
+        svg.append("text")
+        .attr("fill", "black")  
+        .attr("x", w/10 + heatmap_single_w/sections + box_w*7)
+        .attr("y", (heatmap_single_h-margin.top) / 2 + box_h_leg)
+        .attr("text-anchor", "middle")
+        .text(halfNES);
+
+        svg.append("text")
+        .attr("fill", "black")  
+        .attr("x", w/10 + heatmap_single_w/sections + box_w*7)
+        .attr("y", (heatmap_single_h-margin.top) / 2 + box_h_leg*legend_data.length/2 + box_h_leg)
+        .attr("text-anchor", "middle")
+        .text(minNES);
+
+        // add levels to label legend
+        svg.append("g")
+        .attr("transform", "translate(" + (w/10 + heatmap_single_w/sections + box_w*7 + 10) + "," + ((heatmap_single_h-margin.top) / 2 + box_h_leg*legend_data.length/2 + box_h_leg) + ")")
+        .attr("id", "legend_title")
+        .append("text")
+          .attr("x", 0)
+          .attr("y", 0)
+          .text(levels[0])
+          .style("fill", "black" )
+          .style("font-size", 18)
+
+        svg.append("g")
+        .attr("transform", "translate(" + (w/10 + heatmap_single_w/sections + box_w*7 + 10) + "," + ((heatmap_single_h-margin.top) / 2 - box_h_leg*legend_data.length/2 + box_h_leg) + ")")
+        .attr("id", "legend_title")
+        .append("text")
+          .attr("x", 0)
+          .attr("y", 0)
+          .text(levels[1])
+          .style("fill", "black" )
+          .style("font-size", 18)
+
+        
+    }
+
+    
+
+</script>

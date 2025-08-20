@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<style>
+html {
+    height: 100%;
+}
+body {
+    min-height: 100%;
+}
+
+
+.button{
+    height:30px;
+}
+
+/* https://stackoverflow.com/questions/6464592/how-to-align-entire-html-body-to-the-center */
+html, body {height:100%;}
+html {display:table; width:100%;}
+
+body {
+   display:table-cell; 
+   text-align:center; 
+   vertical-align:middle;
+}
+
+.content {
+   border: 5px;
+   border-style: solid;
+   border-color: #FFA500;
+   border-radius: 40px;
+   padding: 50px;
+   width: 50%;
+   margin-left: auto;
+   margin-right: auto;
+}
+
+
+</style>
+
+<title>Omics Visualization</title>
+<body>
+
+
+<div class="content">
+
+<p style="color:green; font-size:30px; font-family:Arial;"> Completed computation of expression matrix.</p>
+<p style="color:green; font-size:20px; font-family:Arial; text-align:center;"> Go Home to continue analysis.</p>
+
+
+<form id="home" action="/" method="get">
+  <button class="button" type="submit" onclick="home();">Home</button>
+</form>
+
+</div>
+
+
+</body>
+
+<script>
+    function home() {
+        document.body.style.cursor = 'progress';
+        document.getElementById("home").submit();
+    }
+
+</script>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" 
+          content="width=device-width, initial-scale=1.0">
+    <title>Exemplar Image Search</title>
+    <style>
+        img {
+            height: 1200px;
+            width: auto;
+        }
+
+        h1 {
+            color: green;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        table {
+            margin-top: 100px;
+            border:1px solid black;
+        }        
+
+        .table-header {
+            font-size: 60px;
+            font-weight: bold;
+        }
+
+        input[type='checkbox'] {
+           transform: scale(5);
+        }
+
+        svg {
+            position: fixed;   
+            top: 0;
+            left: 0;
+            z-index: 10;     
+        }
+
+        button:active {
+            background-color: #D3D3D3; 
+        }
+
+        button {
+            font-size:60px; 
+            background-color: #c8bca8;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div style="display: flex; gap: 30px;">
+
+        <form action="/google_image_search" method="post" name="google_search" id="google_search">
+            <input type="text" name='query' id="query" style="width:2000px; height:80px; font-size:60px;" value="{{query_string}}">
+            <input type="hidden" name="current" id="current" value="{{current}}" />
+            <input type="hidden" name="next" id="next" value="-1" />
+            <input type="hidden" name="prev" id="prev" value="-1" />
+            <input type="submit" onclick="add_blink();" style="height:80px; font-size:60px;" value="Search">
+        </form>
+
+        <button id = "add_template_button" onclick="get_image_urls();">Add Exemplar References to Context Map</button>
+
+
+        <form id="extend_templates" action="/context_map" method="post">
+            <input type="hidden" name="template_urls" id="template_urls" value="" />
+            <button id="extend_templates_button" class="button" type="submit" style="display: none;"></button>
+        </form>
+
+    </div>
+
+
+    <button type="button" onclick="prevPage();">Prev</button>
+    <button type="button" onclick="nextPage();">Next</button>
+
+
+    <div class="container">
+    <table id="myTable" border="1">
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script>
+
+    // https://www.codewithfaraz.com/content/165/create-dynamic-html-table-using-html-css-and-javascript
+
+    var img_data = {{img_data | tojson}};
+    var select_urls = [];
+
+
+    function createTable() {
+      var table = document.getElementById("myTable");
+      var columnsInput = 4;
+      var rowsInput = Math.ceil(img_data.length / 2);
+      var columns = parseInt(columnsInput);
+      var rows = parseInt(rowsInput);
+
+      // Clear existing table
+      while (table.firstChild) {
+        table.removeChild(table.firstChild);
+      }
+
+      // Create table header
+      var headerRow = document.createElement("tr");
+      var th1 = document.createElement("th");
+      th1.textContent = "Image";
+      th1.classList.add("table-header");
+      headerRow.appendChild(th1);
+      var th2 = document.createElement("th");
+      th2.textContent = "Select";
+      th2.classList.add("table-header");
+      headerRow.appendChild(th2);
+      var th3 = document.createElement("th");
+      th3.textContent = "Image";
+      th3.classList.add("table-header");
+      headerRow.appendChild(th3);
+      var th4 = document.createElement("th");
+      th4.textContent = "Select";
+      th4.classList.add("table-header");
+      headerRow.appendChild(th4);
+      table.appendChild(headerRow);
+
+
+      table.appendChild(headerRow);
+
+      
+      // Create table rows
+      for (var i = 0; i < rows; i++) {
+        var row = document.createElement("tr");
+        for (var j = 0; j < columns; j++) {
+            // append image
+            if ((j == 0) || (j == 2)) {
+                if (j == 0) {
+                    var cell = document.createElement("td");
+                    var img = document.createElement("img");
+                    img.src = img_data[(2*i)]['link'];
+                    img.height = img_data[(2*i)]['height'];
+                    img.width = img_data[(2*i)]['width'];
+
+                    
+                    cell.appendChild(img);
+                    row.appendChild(cell);
+                }
+                if ((j == 2) && (2*i+1 < img_data.length)) {
+                    var cell = document.createElement("td");
+                    var img = document.createElement("img");
+                    img.src = img_data[(2*i+1)]['link']; 
+                    img.height = img_data[(2*i+1)]['height'];
+                    img.width = img_data[(2*i+1)]['width'];
+
+                    cell.appendChild(img);
+                    row.appendChild(cell);
+                }
+            }
+
+            if (((j == 1) || (j == 3) ) && ((2*i + j - 1) <= img_data.length)) {
+                if (j == 1) {
+                    var cell = document.createElement("td");
+                    var checkbox = document.createElement("input");
+                    checkbox.type = 'checkbox';
+                    checkbox.name = img_data[(2*i)]['link'];
+                    
+                    cell.appendChild(checkbox);
+                    row.appendChild(cell);
+                }
+
+                if (j == 3) {
+                    if ((2*i + j - 1) <= img_data.length) {
+                        var cell = document.createElement("td");
+                        var checkbox = document.createElement("input");
+                        checkbox.type = 'checkbox';
+                        checkbox.name = img_data[(2*i+1)]['link'];
+                        
+                        cell.appendChild(checkbox);
+                        row.appendChild(cell);
+                    }
+                }
+            }
+
+
+            
+        }
+        table.appendChild(row);
+      }
+
+    }
+
+    // https://stackoverflow.com/questions/25434813/simple-pagination-in-javascript
+    // load previous 10 images
+    function prevPage()
+    {
+        document.getElementById("prev").value = 10;
+        document.getElementById("google_search").submit();
+
+        add_blink();
+    }
+
+    // load next 10 images
+    function nextPage()
+    {
+        document.getElementById("next").value = 10;
+        document.getElementById("google_search").submit();
+
+        add_blink();
+        
+    }
+
+    function get_image_urls() {
+        let name, ischecked = null;
+
+        $("input[type='checkbox']").each(function(){
+          name = $(this).attr('name'); 
+          value = $(this).attr('value'); 
+          ischecked = $(this).is(":checked"); //check if checked
+
+          if (ischecked) {
+            select_urls.push(name);
+          }
+        });
+
+        // if nothing is checked then alert
+        if (select_urls.length == 0) {
+            alert('You must select at least 1 image to add to context map.');
+            return;
+        }
+
+        // get rid of duplicates
+        document.getElementById("template_urls").value = JSON.stringify([...new Set(select_urls)]);
+
+        console.log(document.getElementById("template_urls").value)
+
+        // back to backend
+        document.getElementById("extend_templates").submit();
+
+        add_blink();
+
+    }
+
+
+    // blink while loading so user doesn't click on anything
+    function add_blink() {
+        let svg = d3.select("body").append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%");
+
+        let top_cover = svg.append('g');
+
+        let w = document.documentElement.clientWidth;
+        let h = document.documentElement.clientHeight;
+
+          top_cover.append("rect")
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', w)
+            .attr('height', h)
+            .attr("fill-opacity", 0.7)
+            .attr('fill', '#faf0e6')
+            .attr("id", "cover");
+
+
+          top_cover.append("text")
+          .attr("x", 300)
+          .attr("y", 300)
+          .text("Loading")
+          .style("font-size", "96px")
+          .style('fill', 'darkGreen')
+          .attr("id", "cover_text1");
+
+          top_cover.append("text")
+          .attr("x", w - 500)
+          .attr("y", 300)
+          .text("Loading")
+          .style("font-size", "96px")
+          .style('fill', 'darkGreen')
+          .attr("id", "cover_text2");
+
+          function blink() {
+            d3.select("#cover_text1").raise();
+            d3.select("#cover_text2").raise();
+
+            d3.select("#cover_text1").transition()
+              .duration(400)
+              .style("fill", "darkGreen")
+              .transition()
+              .duration(400)
+              .style("fill", "white")
+              .on("end", blink)
+
+            d3.select("#cover_text2").transition()
+              .duration(400)
+              .style("fill", "darkGreen")
+              .transition()
+              .duration(400)
+              .style("fill", "white")
+              .on("end", blink)
+          }
+
+          blink();
+    }
+
+
+
+    createTable();
+
+</script>
+</body>
+
+</html>
