@@ -13,4 +13,4 @@ The visAPPprot system is compatible with both Mac and Windows.
 
 To download the contents of this repository, you can either clone the repo (if you are familiar with the cloning process) or you can download this repo as a ZIP file by clicking on the green "Code" button at the top of this page and in the dropdown menu click "Download ZIP".
 
-After you have the contents of this repository on your machine, move EITHER the visAPPprot_mac/ folder (if you use Mac) OR the visAPPprot_windows/ folder (if you use Windows) to your Documents/ directory. From there on, follow PDFs 1-3 from this repo to install and use visAPPprot. 
+After you have the contents of this repository on your machine, move EITHER the visAPPprot_mac/ folder (if you use Mac) OR the visAPPprot_windows/ folder (if you use Windows) to your Documents/ directory. From there on, follow PDFs 1-4 from this repo to install and use visAPPprot. 

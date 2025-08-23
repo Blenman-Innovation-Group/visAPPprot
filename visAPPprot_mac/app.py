@@ -100,7 +100,8 @@ download_img_prefix = ""
 template_images = []
 words_list = {}
 current = 0
-
+api_key = ""
+cx = ""
 
 
 
@@ -146,6 +147,14 @@ def check_gpr_dir():
     return False
 
 
+def get_image_search_keys():
+    global api_key, cx
+
+    keys_file = pd.read_csv("./image_search.csv")
+
+    cx = keys_file['CX'].values[0]
+    api_key = keys_file['KEY'].values[0]
+
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -161,6 +170,9 @@ def index():
         
         if not uniprot_to_name:
             prep_uniprot()
+
+            # get keys for google image search 
+            get_image_search_keys()
 
             if check_gpr_dir():
                 with conversion.localconverter(default_converter):
@@ -673,10 +685,9 @@ def is_image_accessible(link):
 
 @app.route('/google_image_search', methods=['GET', 'POST']) 
 def google_image_search():
-    global current
+    global current, api_key, cx
 
     try:
-
         service = build("customsearch", "v1", developerKey=api_key)
 
         img_data = []
@@ -1016,6 +1027,7 @@ def cell_correlation():
 
                     # download each image from the list of urls
                     for url in template_urls:
+                        print(url)
                         img_name = img_name_from_url(url)
                         download_path = './static/exemplar_references/' + cur_dataset.split('.')[0] + '/pathway/' + img_name
                         
