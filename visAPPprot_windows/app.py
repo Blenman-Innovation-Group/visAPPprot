@@ -1,11 +1,32 @@
+import os
+import sys
+
+def resolve_duplicate_libiomp5md():
+    # this is an issue in Windows with python 3.12, conda, and torch
+    # every conda env has a libiomp5md.dll, then the torch install has its own libiomp5md.dll
+    # miniconda3/envs/omics_env/Library/bin/ and miniconda3/envs/omics_env/Lib/site-packages/torch/lib
+    # the duplicate causes a system error at runtime
+    # to resolve this we rename the extra one under the torch folder so there's only one legitimate libiomp5md.dll left
+    # ORDER MATTERS this needs to happen before any further imports
+    
+    conda_path = os.environ.get("CONDA_PREFIX", sys.prefix)
+    extra_5mddll = os.path.join(conda_path, "Lib", "site-packages", "torch", "lib", "libiomp5md.dll")
+    rename_5mddll = os.path.join(conda_path, "Lib", "site-packages", "torch", "lib", "libiomp5md.dll.hidden")
+
+
+    # if duplicate exists move it
+    if os.path.exists(extra_5mddll):
+        os.rename(extra_5mddll, rename_5mddll)
+
+resolve_duplicate_libiomp5md()
+
+
 from rpy2 import robjects
 import rpy2.robjects as robjects
-import sys
 from flask import Flask, redirect, url_for, render_template, request, flash, jsonify
 import numpy as np
 import pandas as pd
 import pickle
-import os
 import json
 import rpy2
 from rpy2.rinterface import BoolSexpVector
@@ -163,6 +184,7 @@ def index():
     global cur_dataset, cluster_rows, cluster_cols, raw, exp_mat, levels, lfcshrink_type, times_cur, rowcol, pathways_data, uniprot_to_name, gpr_header, column_name, data_dir, gpr_dir, gpr_proteins, gpr_patients, download_img_prefix, template_images, words_list, base
     
     try:
+
         with conversion.localconverter(default_converter):
             base = importr('base')
 
