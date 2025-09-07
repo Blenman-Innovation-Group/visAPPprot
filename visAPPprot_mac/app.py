@@ -353,7 +353,7 @@ def index():
                     cmd = "touch " + download_dir_name + "words_list.txt"
                     system(cmd)
 
-            lfcshrink_types = {"GLM": "Generalized Linear Model (GLM)", "normal": "GLM lfcShrink normal", "apeglm": "GLM lfcShrink apeglm", "ashr": "GLM lfcShrink ashr"}
+            lfcshrink_types = {"GLMnormal": "Generalized Linear Model (GLM)", "GLMshrinkNormal": "GLM lfcShrink normal", "GLMshrinkApeglm": "GLM lfcShrink apeglm", "GLMshrinkAshr": "GLM lfcShrink ashr"}
 
 
             return render_template('index_horizontal.html', rdata=rdata, csv=csv, pathways_data=pathways_list, rowcol=rowcol, gpr_header=gpr_header, current_column=column_name, gpr_proteins=gpr_proteins, gpr_patients=gpr_patients, current_expmat=exp_mat, current_dataset=cur_dataset, level1=level1, level2=level2, lfcshrink_types=lfcshrink_types)
@@ -883,10 +883,10 @@ def volcano():
                 # add uniprot column to the res2 file
 
                 dir_prefix = "./differential_expression_tables/" + cur_dataset.split(".")[0] + "/"
-                res_filename = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_volcano_" + lfcshrink_type + "_" + str(volcano_fig_count) + ".csv"
+                res_filename = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_volcano_" + lfcshrink_type + "_" + str(volcano_fig_count) + ".csv"
                 res_file = open(res_filename, "r")
 
-                res_filename_out = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_volcano_" + str(volcano_fig_count) + "_temp.csv"
+                res_filename_out = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_volcano_" + str(volcano_fig_count) + "_temp.csv"
                 res_file_out = open(res_filename_out, "w")
 
                 # header
@@ -914,7 +914,7 @@ def volcano():
                 os.system(cmd)
 
 
-                return render_template("volcano.html", resShrink=resShrink, levels=levels, cur_dataset=cur_dataset, volcano_fig_count = volcano_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name)
+                return render_template("volcano.html", resShrink=resShrink, levels=levels, cur_dataset=cur_dataset, volcano_fig_count = volcano_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
         if request.method == 'POST':
             form_args = request.form.to_dict()
@@ -1160,10 +1160,10 @@ def pathways():
 
             # add uniprot column to the res2 file
             dir_prefix = "./differential_expression_tables/" + cur_dataset.split(".")[0] + "/"
-            res_filename = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_pathway_" + lfcshrink_type + "_" + str(pathway_fig_count) + ".csv"
+            res_filename = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_pathway_" + lfcshrink_type + "_" + str(pathway_fig_count) + ".csv"
             res_file = open(res_filename, "r")
 
-            res_filename_out = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_pathway_" + str(pathway_fig_count) + "_temp.csv"
+            res_filename_out = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_pathway_" + str(pathway_fig_count) + "_temp.csv"
             res_file_out = open(res_filename_out, "w")
 
             # header
@@ -1191,7 +1191,7 @@ def pathways():
             os.system(cmd)
 
             
-            return render_template("pathways.html", fig=fig, index=index, levels=levels, cur_dataset=cur_dataset, pathway_fig_count = pathway_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name)
+            return render_template("pathways.html", fig=fig, index=index, levels=levels, cur_dataset=cur_dataset, pathway_fig_count = pathway_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
     except RRuntimeError as e:
         error_str = "R function error for pathway map. " + str(e)
@@ -1204,7 +1204,7 @@ def pathways():
 
 @app.route('/render_heatmap_hm')
 def render_heatmap_hm():
-    global array_vst, raw, proteins, cols, cur_dataset, heatmap_fig_count, cluster_rows, cluster_cols, column_name, download_img_prefix
+    global array_vst, raw, proteins, cols, cur_dataset, heatmap_fig_count, cluster_rows, cluster_cols, column_name, download_img_prefix, lfcshrink_type
 
     try:
         # convert array_vst to np array, then re-orient array to work for matplotlib
@@ -1305,7 +1305,7 @@ def render_heatmap_hm():
         fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_unnormalized_"  + str(heatmap_fig_count) + ".svg"
 
         if (not raw):
-            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_normalized_" + str(heatmap_fig_count) + ".svg"
+            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_" + lfcshrink_type + "_normalized_" + str(heatmap_fig_count) + ".svg"
 
 
         bbox_artist = []
@@ -1331,7 +1331,7 @@ def render_heatmap_hm():
 
 @app.route('/render_heatmap_wgcna', methods=["POST", "GET"])
 def render_heatmap_wgcna():
-    global raw, cur_dataset, wgcna_fig_count, column_name
+    global raw, cur_dataset, wgcna_fig_count, column_name, lfcshrink_type
 
     try:
         data = request.get_json()
@@ -1447,7 +1447,7 @@ def render_heatmap_wgcna():
         fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_wgcna_" + str(wgcna_fig_count) + ".svg"
 
         if (not raw):
-            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_wgcna_" + str(wgcna_fig_count) + ".svg"
+            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_" + lfcshrink_type + "_wgcna_" + str(wgcna_fig_count) + ".svg"
 
         fig.subplots_adjust(left=0.2)  
         plt.savefig(fig_title, dpi=150)
@@ -1511,7 +1511,7 @@ def heatmap():
             w = len(cols) * 25 # 50
 
            
-            return render_template("heatmap.html", array_vst = array_vst_js, proteins = proteins, patients = cols, w=w, h=h, raw=raw, cluster_rows=cluster_rows, cluster_cols=cluster_cols, column_name=column_name)
+            return render_template("heatmap.html", array_vst = array_vst_js, proteins = proteins, patients = cols, w=w, h=h, raw=raw, cluster_rows=cluster_rows, cluster_cols=cluster_cols, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
     except RRuntimeError as e:
         error_str = "R function error for heatmap. " + str(e)
@@ -1529,7 +1529,7 @@ def heatmap_return():
 
 @app.route("/wgcna",methods=["POST"]) 
 def wgcna():
-    global array_vst_nocluster, array_vst, raw, levels, lfcshrink_type, cur_dataset, exp_mat, submat, submat_proteins, submat_patients, wgcna_fig_count, data_dir, column_name
+    global array_vst_nocluster, array_vst, raw, levels, lfcshrink_type, cur_dataset, exp_mat, submat, submat_proteins, submat_patients, wgcna_fig_count, data_dir, column_name, lfcshrink_type
 
     try:
         proteins = request.form["wgcna_proteins"]
@@ -1593,7 +1593,7 @@ def wgcna():
             height = list(res[4])
 
 
-            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=False, cur_dataset=cur_dataset, column_name=column_name)
+            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=False, cur_dataset=cur_dataset, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
 
     except RRuntimeError as e:

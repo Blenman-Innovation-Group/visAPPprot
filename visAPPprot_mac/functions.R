@@ -178,8 +178,6 @@ wgcna_compute <- function(col_names, row_names, y, array_vst, levels, lfcshrink_
             if (intType==1)
             {
                 cor_mat = abs(cor_mat);
-                # print(cor_mat)
-                # cor_mat = cor_mat
                 print("unsigned adjacency")
                 
             } else if (intType==2) # signed
@@ -216,10 +214,6 @@ wgcna_compute <- function(col_names, row_names, y, array_vst, levels, lfcshrink_
                               "   Hint: please input more genes.")); plot(1,1)
             } else {
                 datErest=datExpr[, match1 ]
-                # print(datErest)
-                # print(nrow((datErest)))
-                # print(ncol((datErest)))
-                # 
                 if (!is.null(weights)) weights = weights[, match1];
                 print(networkType)
                 ADJ1 = adjacency(datErest, weights = weights, power = power, type = networkType)
@@ -239,8 +233,6 @@ wgcna_compute <- function(col_names, row_names, y, array_vst, levels, lfcshrink_
                 labelrow[hier1$order[length(labeltree):1]]=labelrow[hier1$order]
                 
                 options(expressions = 10000)
-                
-                # print(labeltree)
                 
                 diss1_reordered <- diss1[unlist(hier1["order"]), unlist(hier1["order"])]
                 
@@ -286,8 +278,6 @@ wgcna_compute <- function(col_names, row_names, y, array_vst, levels, lfcshrink_
         
         diss1_clustered <- as.data.frame(diss1[unlist(hier1["order"]), unlist(hier1["order"])])
         gene_names <- row.names(diss1_clustered)
-        
-        # write.csv(diss1_clustered,file="100_diss1.csv",fileEncoding = "UTF-8")
         
         dynamicMods_all <- dynamicMods
         dynamicMods_vis <- dynamicMods[geneTree$order]
@@ -744,9 +734,6 @@ wgcna_compute_all <- function(col_names, row_names, array_vst, levels, lfcshrink
             
             sft = pickSoftThreshold(exp_mat, powerVector = powers, verbose = 5)
             
-            
-            # sft <<- pickSoftThreshold(exp_mat, powerVector = powers, verbose = 5)
-            
             if (!"fitIndices" %in% names(sft)) {
                 stop("pickSoftThreshold() failure")
             }
@@ -758,7 +745,7 @@ wgcna_compute_all <- function(col_names, row_names, array_vst, levels, lfcshrink
             
             TOM = TOMsimilarity(adj);
             
-            # TODO add row and col names to TOM matrix
+            # add row and col names to TOM matrix
             colnames(TOM) <- colnames(adj)
             rownames(TOM) <- rownames(adj)
             
@@ -828,18 +815,10 @@ wgcna_compute_all <- function(col_names, row_names, array_vst, levels, lfcshrink
 
 
 volcano <- function(data_dir, cur_dataset, exp_mat, levels, lfcshrink_type, folder_name, volcano_fig_count) {
-    # cur_dataset <- 'LupusPatientCharacter.csv'
-    # data_dir <- "./processed_data/"
-    # exp_mat <- "expmat_SNR mean 635.csv"
-    # levels <- c("Disease", "Control")
-    # lfcshrink_type <- "normal"
-    # folder_name<-"LupusPatientCharacter"
-    # volcano_fig_count <- 0
 
     cur_dataset_load <- paste(data_dir, cur_dataset, sep="")
     PatientCharacter <- read.csv(file=cur_dataset_load, header=TRUE, sep=",")
-    # load(cur_dataset_load)
-    
+
     expmat_load <- paste(data_dir, exp_mat, sep="")
     IgMexpmat <- read.csv(expmat_load, header=TRUE, row.names=1)
     
@@ -881,8 +860,6 @@ volcano <- function(data_dir, cur_dataset, exp_mat, levels, lfcshrink_type, fold
         equal     = colnames(round(count_input)) == rownames(samples)
     )
     
-    print(head(compare_names, 20))  # or View(compare_names)
-    
     dds <- DESeqDataSetFromMatrix(countData = round(count_input),
                                   colData = samples,
                                   design= ~ Disease)
@@ -898,38 +875,44 @@ volcano <- function(data_dir, cur_dataset, exp_mat, levels, lfcshrink_type, fold
     
     res2 = NULL
     
-    if (lfcshrink_type == "GLM") {
+    if (lfcshrink_type == "GLMnormal") {
         res2=res1
     } else {
-        res2=lfcShrink(dds,coef = coef,type = lfcshrink_type)
+        if (lfcshrink_type == "GLMshrinkNormal") {
+            res2=lfcShrink(dds,coef = coef,type = "normal")
+        }
+        
+        if (lfcshrink_type == "GLMshrinkApeglm") {
+            res2=lfcShrink(dds,coef = coef,type = "apeglm")
+        }
+        
+        if (lfcshrink_type == "GLMshrinkAshr") {
+            res2=lfcShrink(dds,coef = coef,type = "ashr")
+        }
     }
     
-    # res2=lfcShrink(dds,coef = coef,type = lfcshrink_type)
     cat("Down-regulated:",sum(res2$log2FoldChange<(-1.0)&res2$padj<0.05,na.rm = TRUE),"\n")
-    # cat("Down-regulated:",sum(res2$log2FoldChange<(1.0)&res2$pvalue<0.05,na.rm = TRUE),"\n")
-    
+
     cat("Up-regulated:",sum(res2$log2FoldChange>1.0&res2$padj<0.05,na.rm = TRUE),"\n")
     
-    res1name <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
-    res1name <- paste(res1name, "/res1", sep = "", collapse = NULL)
-    res1name <- paste(res1name, folder_name, sep = "_", collapse = NULL)
-    res1name <- paste(res1name, "volcano", sep = "_", collapse = NULL)
-    res1name <- paste(res1name, lfcshrink_type, sep = "_", collapse = NULL)
-    res1name <- paste(res1name, (volcano_fig_count+1), sep = "_", collapse = NULL)
-    res1name <- paste(res1name, "csv", sep = ".", collapse = NULL)
+    # save differential expression tables
+    # res1name <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
+    # res1name <- paste(res1name, "/res1", sep = "", collapse = NULL)
+    # res1name <- paste(res1name, folder_name, sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, "volcano", sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, lfcshrink_type, sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, (volcano_fig_count+1), sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, "csv", sep = ".", collapse = NULL)
     
     res2name <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
-    res2name <- paste(res2name, "/res2Shrink", sep = "", collapse = NULL)
+    res2name <- paste(res2name, "/res", sep = "", collapse = NULL)
     res2name <- paste(res2name, folder_name, sep = "_", collapse = NULL)
     res2name <- paste(res2name, "volcano", sep = "_", collapse = NULL)
     res2name <- paste(res2name, lfcshrink_type, sep = "_", collapse = NULL)
     res2name <- paste(res2name, (volcano_fig_count+1), sep = "_", collapse = NULL)
     res2name <- paste(res2name, "csv", sep = ".", collapse = NULL)
-    
-    # res2name <- paste("./differential_expression_tables/res2Shrink", cur_dataset, sep = "_", collapse = NULL)
-    # res2name <- paste(res2name, "csv", sep = ".", collapse = NULL)
-    
-    write.csv(res1,file=res1name)
+
+    # write.csv(res1,file=res1name)
     
     
     resShrink=data.frame(res2$log2FoldChange,res2$pvalue, res2$padj)
@@ -955,22 +938,7 @@ volcano <- function(data_dir, cur_dataset, exp_mat, levels, lfcshrink_type, fold
 
 
 pathways <- function(data_dir, cur_dataset, exp_mat, levels, pathways_data, lfcshrink_type, folder_name, pathway_fig_count) {
-    # pathways_data <- c("B_Cell_Receptor_Signaling.txt", "Cell_Type_Astrocytes.txt")
-    # data_dir <- "./processed_data/"
-    # cur_dataset <- "PatientCharacter1.csv"
-    # lfcshrink_type <- "normal"
-    # levels <- c("Control", "Disease")
-    # exp_mat <- "ExpMat1.csv"
-    
-    # cur_dataset <- 'PatientCharacter2.csv'
-    # data_dir <- "./processed_data/"
-    # exp_mat <- "ExpMat2.csv"
-    # levels <- c("Disease", "Control")
-    # lfcshrink_type <- "apeglm"
-    # folder_name<-"PatientCharacter2"
-    # pathway_fig_count <- 0
-
-    
+ 
     cur_dataset_load <- paste(data_dir, cur_dataset, sep="")
     PatientCharacter <- read.csv(file=cur_dataset_load, header=TRUE, sep=",")
     
@@ -1018,33 +986,44 @@ pathways <- function(data_dir, cur_dataset, exp_mat, levels, pathways_data, lfcs
     
     res2 = NULL
 
-    if (lfcshrink_type == "GLM") {
+    if (lfcshrink_type == "GLMnormal") {
         res2=res1
     } else {
-        res2=lfcShrink(dds,coef = coef,type = lfcshrink_type)
+        if (lfcshrink_type == "GLMshrinkNormal") {
+            res2=lfcShrink(dds,coef = coef,type = "normal")
+        }
+        
+        if (lfcshrink_type == "GLMshrinkApeglm") {
+            res2=lfcShrink(dds,coef = coef,type = "apeglm")
+        }
+        
+        if (lfcshrink_type == "GLMshrinkAshr") {
+            res2=lfcShrink(dds,coef = coef,type = "ashr")
+        }
     }
 
     cat("Down-regulated:",sum(res2$log2FoldChange<(-1.0)&res2$padj<0.05,na.rm = TRUE),"\n")
 
     cat("Up-regulated:",sum(res2$log2FoldChange>1.0&res2$padj<0.05,na.rm = TRUE),"\n")
 
-    res1name <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
-    res1name <- paste(res1name, "/res1", sep = "", collapse = NULL)
-    res1name <- paste(res1name, folder_name, sep = "_", collapse = NULL)
-    res1name <- paste(res1name, "pathway", sep = "_", collapse = NULL)
-    res1name <- paste(res1name, lfcshrink_type, sep = "_", collapse = NULL)
-    res1name <- paste(res1name, (pathway_fig_count+1), sep = "_", collapse = NULL)
-    res1name <- paste(res1name, "csv", sep = ".", collapse = NULL)
-    
+    # save differential expression tables
+    # res1name <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
+    # res1name <- paste(res1name, "/res1", sep = "", collapse = NULL)
+    # res1name <- paste(res1name, folder_name, sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, "pathway", sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, lfcshrink_type, sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, (pathway_fig_count+1), sep = "_", collapse = NULL)
+    # res1name <- paste(res1name, "csv", sep = ".", collapse = NULL)
+    # 
     res2name <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
-    res2name <- paste(res2name, "/res2Shrink", sep = "", collapse = NULL)
+    res2name <- paste(res2name, "/res", sep = "", collapse = NULL)
     res2name <- paste(res2name, folder_name, sep = "_", collapse = NULL)
     res2name <- paste(res2name, "pathway", sep = "_", collapse = NULL)
     res2name <- paste(res2name, lfcshrink_type, sep = "_", collapse = NULL)
     res2name <- paste(res2name, (pathway_fig_count+1), sep = "_", collapse = NULL)
     res2name <- paste(res2name, "csv", sep = ".", collapse = NULL)
     
-    write.csv(res1,file=res1name)
+    # write.csv(res1,file=res1name)
     
     
     resShrink=data.frame(res2$log2FoldChange,res2$pvalue, res2$padj)
@@ -1057,37 +1036,30 @@ pathways <- function(data_dir, cur_dataset, exp_mat, levels, pathways_data, lfcs
     
     # now adjPvalue not padj
     resShrink$label_interest=ifelse((resShrink$pvalue<=adjpvalue_cutoff_Lupus & resShrink$Log2Fold_Change>1.0),rownames(resShrink), ifelse((resShrink$pvalue<=adjpvalue_cutoff_Control & resShrink$Log2Fold_Change<(-1.0)),rownames(resShrink),''))
-    
-    # resShrink$label_interest=ifelse((resShrink$adjPvalue<=adjpvalue_cutoff_Lupus & resShrink$Log2Fold_Change>1.0),rownames(resShrink), ifelse((resShrink$adjPvalue<=adjpvalue_cutoff_Control & resShrink$Log2Fold_Change<(-1.0)),rownames(resShrink),''))
-    # 
-    
+
     resShrink$neglog10pval <- -log10(resShrink$pvalue)
     
-    # resShrink$neglog10pval <- -log10(resShrink$adjPvalue)
     resShrink$name <- rownames(resShrink)
     
     
     res2=res2
-    
-    # stat2=res2$stat
-    
 
     stat2 = 0
-    if (lfcshrink_type == "normal") {
+    
+    if (lfcshrink_type == "GLMnormal") {
         stat2=res2$stat
     } else {
         stat2=res2$pvalue
     }
     
-    names(stat2)=rownames(count_input)
     
-    # fgseaname <- paste("./differential_expression_tables/fgsea", cur_dataset, sep = "_", collapse = NULL)
-    # fgseaname <- paste(fgseaname, "tsv", sep = ".", collapse = NULL)
+    names(stat2)=rownames(count_input)
     
     fgseaname <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
     fgseaname <- paste(fgseaname, "/fgsea", sep = "", collapse = NULL)
     fgseaname <- paste(fgseaname, folder_name, sep = "_", collapse = NULL)
     fgseaname <- paste(fgseaname, "pathway", sep = "_", collapse = NULL)
+    fgseaname <- paste(fgseaname, lfcshrink_type, sep = "_", collapse = NULL)
     fgseaname <- paste(fgseaname, (pathway_fig_count+1), sep = "_", collapse = NULL)
     fgseaname <- paste(fgseaname, "tsv", sep = ".", collapse = NULL)
     
@@ -1139,7 +1111,7 @@ get_gpr_header <- function(gprDirectory) {
            }, arrayvision = {
                skip <- 1
            }, 
-           # SHERRY we're not using readGenericHeader. it defeats the purpose of extracting column names if we have to give it the column names.
+           # we're not using readGenericHeader. it defeats the purpose of extracting column names if we have to give it the column names.
            genepix = {
                h <- readGPRHeader(fullname)
                skip <- h$NHeaderRecords
@@ -2372,10 +2344,3 @@ finalcountmatrices <- function() {
     write.csv(mean_635, file = "expmat_mean635.csv", row.names = TRUE, quote=FALSE)
 
 }
-
-
-# snr_type <- "SNR mean 532"
-# gprDirectory <- "./microarray_data/"
-# data_dir <- "./processed_data/"
-# 
-# compute_expmat_snr(snr_type, gprDirectory, data_dir)

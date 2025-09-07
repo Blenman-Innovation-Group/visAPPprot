@@ -144,20 +144,30 @@ deseq <- function(data_dir, cur_dataset, exp_mat, levels, lfcshrink_type, cluste
     
     res2 = NULL
     
-    if (lfcshrink_type == "GLM") {
+    if (lfcshrink_type == "GLMnormal") {
         res2=res1
     } else {
-        res2=lfcShrink(dds,coef = coef,type = lfcshrink_type)
+        if (lfcshrink_type == "GLMshrinkNormal") {
+            res2=lfcShrink(dds,coef = coef,type = "normal")
+        }
+        
+        if (lfcshrink_type == "GLMshrinkApeglm") {
+            res2=lfcShrink(dds,coef = coef,type = "apeglm")
+        }
+        
+        if (lfcshrink_type == "GLMshrinkAshr") {
+            res2=lfcShrink(dds,coef = coef,type = "ashr")
+        }
     }
     
-    # res2=lfcShrink(dds,coef = coef,type = lfcshrink_type)
     cat("Down-regulated:",sum(res2$log2FoldChange<(-1.0)&res2$padj<0.05,na.rm = TRUE),"\n")
 
     cat("Up-regulated:",sum(res2$log2FoldChange>1.0&res2$padj<0.05,na.rm = TRUE),"\n")
 
-    
+
+    # save differential expression tables    
     res1name <- paste("./differential_expression_tables/", folder_name, sep = "", collapse = NULL)
-    res1name <- paste(res1name, "/res1", sep = "", collapse = NULL)
+    res1name <- paste(res1name, "/res", sep = "", collapse = NULL)
     res1name <- paste(res1name, folder_name, sep = "_", collapse = NULL)
     res1name <- paste(res1name, "heatmap", sep = "_", collapse = NULL)
     res1name <- paste(res1name, lfcshrink_type, sep = "_", collapse = NULL)

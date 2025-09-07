@@ -1276,7 +1276,14 @@ d3
 
     // set filename
     let cur_dataset = {{cur_dataset | tojson}};
-    anchor.download = 'figures_' + cur_dataset.split('.')[0] + '_wgcna_' + wgcna_fig_count.toString() + '.svg'; 
+    let lfcshrink_type = {{lfcshrink_type | tojson}};
+    if (raw == false) {
+      anchor.download = 'figures_' + cur_dataset.split('.')[0] + '_' + lfcshrink_type + '_wgcna_' + wgcna_fig_count.toString() + '.svg'; 
+    }
+    if (raw == true) {
+      anchor.download = 'figures_' + cur_dataset.split('.')[0] + '_wgcna_' + wgcna_fig_count.toString() + '.svg'; 
+    }
+    
 
     // click download link
     anchor.click();

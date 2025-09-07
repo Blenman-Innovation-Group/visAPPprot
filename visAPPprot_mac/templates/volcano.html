@@ -72,7 +72,8 @@ display: none;
     let cur_dataset = {{cur_dataset | tojson}};
     let volcano_fig_count = {{volcano_fig_count | tojson}};
     let column_name = {{column_name | tojson}};
-    let id_name = "volcano_" + cur_dataset.split(".")[0] + "_" + volcano_fig_count.toString()
+    var lfcshrink_type = {{lfcshrink_type | tojson}};
+    let id_name = "volcano_" + cur_dataset.split(".")[0] + "_" + lfcshrink_type + "_" + volcano_fig_count.toString()
 
     const svg = d3.select("#my_dataviz").append("svg")
       .attr("id", id_name)
@@ -83,6 +84,8 @@ display: none;
 
 
     var resShrink = {{resShrink | tojson}};
+
+
 
     const get_protein_form = document.getElementById("protein_info");
 
