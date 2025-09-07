@@ -377,7 +377,7 @@ def index():
                     cmd = "touch " + download_dir_name + "words_list.txt"
                     system(cmd)
 
-            lfcshrink_types = {"GLM": "Generalized Linear Model (GLM)", "normal": "GLM lfcShrink normal", "apeglm": "GLM lfcShrink apeglm", "ashr": "GLM lfcShrink ashr"}
+            lfcshrink_types = {"GLMnormal": "Generalized Linear Model (GLM)", "GLMshrinkNormal": "GLM lfcShrink normal", "GLMshrinkApeglm": "GLM lfcShrink apeglm", "GLMshrinkAshr": "GLM lfcShrink ashr"}
 
 
             return render_template('index_horizontal.html', rdata=rdata, csv=csv, pathways_data=pathways_list, rowcol=rowcol, gpr_header=gpr_header, current_column=column_name, gpr_proteins=gpr_proteins, gpr_patients=gpr_patients, current_expmat=exp_mat, current_dataset=cur_dataset, level1=level1, level2=level2, lfcshrink_types=lfcshrink_types)
@@ -844,114 +844,114 @@ def template_references():
 def volcano():
     global cur_dataset, exp_mat, levels, lfcshrink_type, volcano_fig_count, rowcol, resShrink, data_dir, column_name
 
-    # try:
-    if request.method == 'GET':
-        with conversion.localconverter(default_converter):
-            volcano_compute = robjects.globalenv['volcano']
+    try:
+        if request.method == 'GET':
+            with conversion.localconverter(default_converter):
+                volcano_compute = robjects.globalenv['volcano']
 
-        with conversion.localconverter(default_converter):
-            res = volcano_compute(data_dir, cur_dataset, exp_mat, levels, lfcshrink_type, cur_dataset.split(".")[0], volcano_fig_count)
+            with conversion.localconverter(default_converter):
+                res = volcano_compute(data_dir, cur_dataset, exp_mat, levels, lfcshrink_type, cur_dataset.split(".")[0], volcano_fig_count)
 
 
-        with conversion.localconverter(default_converter):
-            resShrink = res[0] # resShrink
+            with conversion.localconverter(default_converter):
+                resShrink = res[0] # resShrink
 
-            resShrink = pd.DataFrame(resShrink)
-            resShrink = resShrink.T
-            # clear nans from output
-            # https://stackoverflow.com/questions/75223099/na-character-not-identidied-as-nan-after-importing-it-into-python-with-rpy2
-            resShrink[0] = resShrink[0].apply(lambda val: np.nan if isinstance(
-                val, rpy2.rinterface_lib.sexp.NACharacterType) 
-                else val
-            )
-            resShrink[1] = resShrink[1].apply(lambda val: np.nan if isinstance(
-                val, rpy2.rinterface_lib.sexp.NACharacterType) 
-                else val
-            )
-            resShrink[2] = resShrink[2].apply(lambda val: np.nan if isinstance(
-                val, rpy2.rinterface_lib.sexp.NACharacterType) 
-                else val
-            )
-            resShrink[3] = resShrink[3].apply(lambda val: np.nan if isinstance(
-                val, rpy2.rinterface_lib.sexp.NACharacterType) 
-                else val
-            )
-            resShrink[4] = resShrink[4].apply(lambda val: np.nan if isinstance(
-                val, rpy2.rinterface_lib.sexp.NACharacterType) 
-                else val
-            )
-            resShrink[5] = resShrink[5].apply(lambda val: np.nan if isinstance(
-                val, rpy2.rinterface_lib.sexp.NACharacterType) 
-                else val
-            )
+                resShrink = pd.DataFrame(resShrink)
+                resShrink = resShrink.T
+                # clear nans from output
+                # https://stackoverflow.com/questions/75223099/na-character-not-identidied-as-nan-after-importing-it-into-python-with-rpy2
+                resShrink[0] = resShrink[0].apply(lambda val: np.nan if isinstance(
+                    val, rpy2.rinterface_lib.sexp.NACharacterType) 
+                    else val
+                )
+                resShrink[1] = resShrink[1].apply(lambda val: np.nan if isinstance(
+                    val, rpy2.rinterface_lib.sexp.NACharacterType) 
+                    else val
+                )
+                resShrink[2] = resShrink[2].apply(lambda val: np.nan if isinstance(
+                    val, rpy2.rinterface_lib.sexp.NACharacterType) 
+                    else val
+                )
+                resShrink[3] = resShrink[3].apply(lambda val: np.nan if isinstance(
+                    val, rpy2.rinterface_lib.sexp.NACharacterType) 
+                    else val
+                )
+                resShrink[4] = resShrink[4].apply(lambda val: np.nan if isinstance(
+                    val, rpy2.rinterface_lib.sexp.NACharacterType) 
+                    else val
+                )
+                resShrink[5] = resShrink[5].apply(lambda val: np.nan if isinstance(
+                    val, rpy2.rinterface_lib.sexp.NACharacterType) 
+                    else val
+                )
 
-            resShrink = resShrink.T.to_dict('list')
+                resShrink = resShrink.T.to_dict('list')
 
-            volcano_fig_count +=1 
+                volcano_fig_count +=1 
 
-            diffexp_genes = []
+                diffexp_genes = []
 
-            for key in resShrink:
-                gene = resShrink[key]
-                label_interest = gene[3]
-                gene_name = gene[5]
+                for key in resShrink:
+                    gene = resShrink[key]
+                    label_interest = gene[3]
+                    gene_name = gene[5]
+                    
+                    if label_interest:
+                        # ignore nans
+                        if not isinstance(label_interest, float):
+                            diffexp_genes.append(gene_name)
+
+
+                find_cell_corr_condensed_terms(diffexp_genes)
+
+                # add uniprot column to the res2 file
+
+                dir_prefix = "./differential_expression_tables/" + cur_dataset.split(".")[0] + "/"
+                res_filename = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_volcano_" + lfcshrink_type + "_" + str(volcano_fig_count) + ".csv"
+                res_file = open(res_filename, "r")
+
+                res_filename_out = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_volcano_" + str(volcano_fig_count) + "_temp.csv"
+                res_file_out = open(res_filename_out, "w")
+
+                # header
+                header = res_file.readline()
+                header = header.strip() + ",uniprot\n"
+                res_file_out.write(header)
+
+                for line in res_file:
+                    line = line.strip().split(",")
+                    # get label_interest
+                    label_interest = line[4].strip("\"")
+                    if len(label_interest) > 0:
+                        # get uniprot information
+                        function_text = get_uniprot_info(line[4]).strip()
+                        line = ",".join(line) + "," + "\"" + function_text + "\"" + "\n"
+
+                        res_file_out.write(line)
+                    else:
+                        line = ",".join(line) + "\n"
+                        res_file_out.write(line)
+
+                res_file.close()
+                res_file_out.close()
                 
-                if label_interest:
-                    # ignore nans
-                    if not isinstance(label_interest, float):
-                        diffexp_genes.append(gene_name)
+                cmd = "mv " + res_filename_out + " " + res_filename
+                os.system(cmd)
 
 
-            find_cell_corr_condensed_terms(diffexp_genes)
+                return render_template("volcano.html", resShrink=resShrink, levels=levels, cur_dataset=cur_dataset, volcano_fig_count = volcano_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
-            # add uniprot column to the res2 file
+        if request.method == 'POST':
+            form_args = request.form.to_dict()
 
-            dir_prefix = "./differential_expression_tables/" + cur_dataset.split(".")[0] + "/"
-            res_filename = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_volcano_" + lfcshrink_type + "_" + str(volcano_fig_count) + ".csv"
-            res_file = open(res_filename, "r")
+            function_text = get_uniprot_info(form_args['protein_name'])
 
-            res_filename_out = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_volcano_" + str(volcano_fig_count) + "_temp.csv"
-            res_file_out = open(res_filename_out, "w")
+            protein_info = {'function_text': function_text}
+            return protein_info
 
-            # header
-            header = res_file.readline()
-            header = header.strip() + ",uniprot\n"
-            res_file_out.write(header)
-
-            for line in res_file:
-                line = line.strip().split(",")
-                # get label_interest
-                label_interest = line[4].strip("\"")
-                if len(label_interest) > 0:
-                    # get uniprot information
-                    function_text = get_uniprot_info(line[4]).strip()
-                    line = ",".join(line) + "," + "\"" + function_text + "\"" + "\n"
-
-                    res_file_out.write(line)
-                else:
-                    line = ",".join(line) + "\n"
-                    res_file_out.write(line)
-
-            res_file.close()
-            res_file_out.close()
-            
-            cmd = "mv " + res_filename_out + " " + res_filename
-            os.system(cmd)
-
-
-            return render_template("volcano.html", resShrink=resShrink, levels=levels, cur_dataset=cur_dataset, volcano_fig_count = volcano_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name)
-
-    if request.method == 'POST':
-        form_args = request.form.to_dict()
-
-        function_text = get_uniprot_info(form_args['protein_name'])
-
-        protein_info = {'function_text': function_text}
-        return protein_info
-
-    # except RRuntimeError as e:
-    #     error_str = "R function error for volcano plot. " + str(e)
-    #     return render_template('error.html', message=error_str)
+    except RRuntimeError as e:
+        error_str = "R function error for volcano plot. " + str(e)
+        return render_template('error.html', message=error_str)
 
 
 def get_words_from_exemplar(template_image_names):
@@ -1184,10 +1184,10 @@ def pathways():
 
             # add uniprot column to the res2 file
             dir_prefix = "./differential_expression_tables/" + cur_dataset.split(".")[0] + "/"
-            res_filename = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_pathway_" + lfcshrink_type + "_" + str(pathway_fig_count) + ".csv"
+            res_filename = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_pathway_" + lfcshrink_type + "_" + str(pathway_fig_count) + ".csv"
             res_file = open(res_filename, "r")
 
-            res_filename_out = dir_prefix + "res2Shrink_" + cur_dataset.split(".")[0] + "_pathway_" + str(pathway_fig_count) + "_temp.csv"
+            res_filename_out = dir_prefix + "res_" + cur_dataset.split(".")[0] + "_pathway_" + str(pathway_fig_count) + "_temp.csv"
             res_file_out = open(res_filename_out, "w")
 
             # header
@@ -1215,7 +1215,7 @@ def pathways():
             os.system(cmd)
 
             
-            return render_template("pathways.html", fig=fig, index=index, levels=levels, cur_dataset=cur_dataset, pathway_fig_count = pathway_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name)
+            return render_template("pathways.html", fig=fig, index=index, levels=levels, cur_dataset=cur_dataset, pathway_fig_count = pathway_fig_count, rowcol = rowcol, exp_mat=exp_mat, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
     except RRuntimeError as e:
         error_str = "R function error for pathway map. " + str(e)
@@ -1228,7 +1228,7 @@ def pathways():
 
 @app.route('/render_heatmap_hm')
 def render_heatmap_hm():
-    global array_vst, raw, proteins, cols, cur_dataset, heatmap_fig_count, cluster_rows, cluster_cols, column_name, download_img_prefix
+    global array_vst, raw, proteins, cols, cur_dataset, heatmap_fig_count, cluster_rows, cluster_cols, column_name, download_img_prefix, lfcshrink_type
 
     try:
         # convert array_vst to np array, then re-orient array to work for matplotlib
@@ -1329,7 +1329,7 @@ def render_heatmap_hm():
         fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_unnormalized_"  + str(heatmap_fig_count) + ".svg"
 
         if (not raw):
-            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_normalized_" + str(heatmap_fig_count) + ".svg"
+            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_" + lfcshrink_type + "_normalized_" + str(heatmap_fig_count) + ".svg"
 
 
         bbox_artist = []
@@ -1355,7 +1355,7 @@ def render_heatmap_hm():
 
 @app.route('/render_heatmap_wgcna', methods=["POST", "GET"])
 def render_heatmap_wgcna():
-    global raw, cur_dataset, wgcna_fig_count, column_name
+    global raw, cur_dataset, wgcna_fig_count, column_name, lfcshrink_type
 
     try:
         data = request.get_json()
@@ -1471,7 +1471,7 @@ def render_heatmap_wgcna():
         fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_wgcna_" + str(wgcna_fig_count) + ".svg"
 
         if (not raw):
-            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_wgcna_" + str(wgcna_fig_count) + ".svg"
+            fig_title = download_img_prefix + "heatmap_" + cur_dataset.split(".")[0] + "_" + lfcshrink_type + "_wgcna_" + str(wgcna_fig_count) + ".svg"
 
         fig.subplots_adjust(left=0.2)  
         plt.savefig(fig_title, dpi=150)
@@ -1617,7 +1617,7 @@ def wgcna():
             height = list(res[4])
 
 
-            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=False, cur_dataset=cur_dataset, column_name=column_name)
+            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=False, cur_dataset=cur_dataset, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
 
     except RRuntimeError as e:
@@ -1687,7 +1687,7 @@ def wgcna_all():
             merge = np.array(res[3]).tolist()
             height = list(res[4])
 
-            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=True, cur_dataset=cur_dataset, column_name=column_name)
+            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=True, cur_dataset=cur_dataset, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
     except RRuntimeError as e:
         error_str = "R function error in WGCNA clustering. " + str(e)

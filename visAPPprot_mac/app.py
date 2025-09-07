@@ -1511,7 +1511,7 @@ def heatmap():
             w = len(cols) * 25 # 50
 
            
-            return render_template("heatmap.html", array_vst = array_vst_js, proteins = proteins, patients = cols, w=w, h=h, raw=raw, cluster_rows=cluster_rows, cluster_cols=cluster_cols, column_name=column_name, lfcshrink_type=lfcshrink_type)
+            return render_template("heatmap.html", array_vst = array_vst_js, proteins = proteins, patients = cols, w=w, h=h, raw=raw, cluster_rows=cluster_rows, cluster_cols=cluster_cols, column_name=column_name)
 
     except RRuntimeError as e:
         error_str = "R function error for heatmap. " + str(e)
@@ -1529,7 +1529,7 @@ def heatmap_return():
 
 @app.route("/wgcna",methods=["POST"]) 
 def wgcna():
-    global array_vst_nocluster, array_vst, raw, levels, lfcshrink_type, cur_dataset, exp_mat, submat, submat_proteins, submat_patients, wgcna_fig_count, data_dir, column_name, lfcshrink_type
+    global array_vst_nocluster, array_vst, raw, levels, lfcshrink_type, cur_dataset, exp_mat, submat, submat_proteins, submat_patients, wgcna_fig_count, data_dir, column_name
 
     try:
         proteins = request.form["wgcna_proteins"]
@@ -1663,7 +1663,7 @@ def wgcna_all():
             merge = np.array(res[3]).tolist()
             height = list(res[4])
 
-            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=True, cur_dataset=cur_dataset, column_name=column_name)
+            return render_template("wgcna_sle.html", diss1_clustered = [], gene_names = [], dynamicMods_dd = dynamicMods_dd, dynamicMods = dynamicMods, diss_l = diss_l, genenames_l = genenames_l, order = order, merge = merge, height = height, submat = submat_js, patients = submat_patients, proteins = submat_proteins, heatmap_h = heatmap_h, raw=raw, total_proteins_n=len(array_vst.index), wgcna_fig_count=wgcna_fig_count, cluster_all=True, cur_dataset=cur_dataset, column_name=column_name, lfcshrink_type=lfcshrink_type)
 
     except RRuntimeError as e:
         error_str = "R function error in WGCNA clustering. " + str(e)
