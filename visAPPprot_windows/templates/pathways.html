@@ -63,7 +63,8 @@ display: none;
     let cur_dataset = {{cur_dataset | tojson}};
     let pathway_fig_count = {{pathway_fig_count | tojson}};
     let column_name = {{column_name | tojson}};
-    let id_name = "pathway_" + cur_dataset.split(".")[0] + "_" + pathway_fig_count.toString()
+    let lfcshrink_type = {{lfcshrink_type | tojson}};
+    let id_name = "pathway_" + cur_dataset.split(".")[0] + "_" + lfcshrink_type + "_" + pathway_fig_count.toString()
 
 
     const svg = d3.select("#my_dataviz").append("svg")
